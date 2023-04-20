@@ -79,6 +79,9 @@ Copy/pasting is also a touch buggy, so I'll be working on that too.</CD.M.update
 	<CD.M.updates.1.4.2>Fixed a problem with Defaultie, where the take to stockpile/drop on floor button was overlapping their defaults button.
 This should have no effect if you're not playing with Defaultie :)
 
+I also modified Count Equipped a bit, it's now "Count Inventory", and counts everything in Pawns' inventory, rather than just equippables.
+In doing so, it also works for non-equippable things, like meals and medicine.
+
 -K
 	</CD.M.updates.1.4.2>
 	
