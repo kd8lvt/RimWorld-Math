@@ -28,7 +28,9 @@ namespace CrunchyDuck.Math {
                 tip = "Currently dropping output on floor. Click to take to stockpile.";
             }
             // Drop/take to stockpile
-            var button_rect = new Rect(baseRect.xMax - (GUIExtensions.SmallElementSize + GUIExtensions.ElementPadding) * 4 + 12, baseRect.y, GUIExtensions.SmallElementSize, GUIExtensions.SmallElementSize);
+            int elementoffset = 4;
+            elementoffset += (ModLister.modsByPackageId.ContainsKey("Xandrmoro.Rim.Defaultie") && ModLister.GetModWithIdentifier("Xandrmoro.Rim.Defaultie").Active ? 1 : 0);
+            var button_rect = new Rect(baseRect.xMax - (GUIExtensions.SmallElementSize + GUIExtensions.ElementPadding) * elementoffset + 12, baseRect.y, GUIExtensions.SmallElementSize, GUIExtensions.SmallElementSize);
             if (Widgets.ButtonImage(button_rect, storeModeImage, baseColor)) {
                 SoundDefOf.DragSlider.PlayOneShotOnCamera();
                 __instance.SetStoreMode(nextStoreMode);
