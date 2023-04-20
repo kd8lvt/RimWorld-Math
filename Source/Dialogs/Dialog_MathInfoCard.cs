@@ -11,10 +11,13 @@ using System;
 namespace CrunchyDuck.Math {
 	// TODO: Possibly add a button to copy a variable directly from infocard.
 
+
 	// oh my god the vanilla game dialog_infocard is programmed so poorly
 	// the interface is so simple, yet for some reason instead of abstracting it down,
 	// they have a shit load of different modes for different types of defs
 	// it is some of the most poorly thought out code i've seen in a while
+
+	// Hi this is Kd - I was thinking of removing this ^ big block of comments, but then I read them and almost died laughing, so they stay. Side-note: I couldn't agree more, Duck. It's real bad.
 	class Dialog_MathInfoCard : Window {
 		public List<StatDrawEntry> statEntries;
 		public BillComponent attachedBill;
@@ -214,7 +217,6 @@ namespace CrunchyDuck.Math {
 
 			cat = catBasics;
 			var stats_sorted = Math.searchableStats.Values.OrderBy(t => t.label);
-			int i = 0;
 			foreach (StatDef statdef in stats_sorted) {
 				stats.Add(new StatDrawEntry(cat, "​" + statdef.label.ToParameter(), "", statdef.description ?? "", display_priority--));
 			}
@@ -231,7 +233,6 @@ namespace CrunchyDuck.Math {
 
 			cat = catBasics;
 			var cats_sorted = MathFilters.CategoryFilter.searchableCategories.Values.OrderBy(t => t.label);
-			int i = 0;
 			foreach (ThingCategoryDef catdef in cats_sorted) {
 				stats.Add(new StatDrawEntry(cat, "​" + catdef.label.ToParameter(), "", catdef.description ?? "", display_priority--));
 			}

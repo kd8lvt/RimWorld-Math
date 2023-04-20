@@ -5,7 +5,8 @@
 	<CD.M.tooltips.make_link>Link this bill to the currently copied bill.</CD.M.tooltips.make_link>
 	<CD.M.tooltips.break_link>Break this bill's link with its parent.</CD.M.tooltips.break_link>
 	<CD.M.tooltips.link_paradox>This bill is a parent to the currently copied bill. Linking would cause a circular relationship. No paradoxes allowed.</CD.M.tooltips.link_paradox>
-	
+	<CD.M.IncludeInventory>Include inventory</CD.M.IncludeInventory>
+
 	<!-- Link settings -->
 	<CD.M.link.name>Name</CD.M.link.name>
 	<CD.M.link.name.description>Link this bill's name to its parent.</CD.M.link.name.description>

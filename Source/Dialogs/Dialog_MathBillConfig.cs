@@ -209,8 +209,8 @@ namespace CrunchyDuck.Math {
 					equipped_tainted_listing.Begin(listing.GetRect(24f));
 					equipped_tainted_listing.ColumnWidth = equipped_tainted_listing.ColumnWidth / 2 - 10;
 					// Equipped check-box
-					if (producedThingDef.IsWeapon || producedThingDef.IsApparel)
-						equipped_tainted_listing.CheckboxLabeled("IncludeEquipped".Translate(), ref bill.includeEquipped);
+					//if (producedThingDef.IsWeapon || producedThingDef.IsApparel) //Not much of a reason to check for this, it just causes confusion when compared to BWM.
+						equipped_tainted_listing.CheckboxLabeled("CD.M.IncludeInventory".Translate(), ref bill.includeEquipped);
 
 					// Tainted check-box
 					equipped_tainted_listing.NewColumn();

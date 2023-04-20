@@ -167,8 +167,8 @@ namespace CrunchyDuck.Math {
 						continue;
 
 					// Equipped.
-					bool can_choose_equipped = producted_thing.IsWeapon || producted_thing.IsApparel;
-					if (can_choose_equipped && !bc.targetBill.includeEquipped && thing.IsHeldByPawn()) {
+					//bool can_choose_equipped = producted_thing.IsWeapon || producted_thing.IsApparel;
+					if (/**can_choose_equipped &&**/ !bc.targetBill.includeEquipped && thing.IsHeldByPawn()) {
 						continue;
 					}
 				}
@@ -194,10 +194,9 @@ namespace CrunchyDuck.Math {
 				}
 			}
 
-			// TODO: Check this in the future. It doesn't work as of now in spite of multiple tests, and I believe it's a core game problem.
-			foreach (Thing heldThing in pawn.inventory.GetDirectlyHeldThings()) {
+			foreach (Thing heldThing in pawn.inventory.innerContainer.InnerListForReading) {
 				if (heldThing.def.Equals(def)) {
-					things.Add((Thing) heldThing);
+					things.Add(heldThing);
 				}
 			}
 
