@@ -10,7 +10,7 @@ namespace CrunchyDuck.Math {
 		private Vector2 scrollPosition = Vector2.zero;
 		public override Vector2 InitialSize => new Vector2(700f, 700f);
 		private List<UpdateLog> updates = new List<UpdateLog>() {
-			{ new UpdateLog("1.5.2", "CD.M.updates.1.5".Translate()) },
+			{ new UpdateLog("1.4.2", "CD.M.updates.1.4.2".Translate()) },
 			{ new UpdateLog("1.4.0", "CD.M.updates.1.4".Translate()) },
 			{ new UpdateLog("1.3.0", "CD.M.updates.1.3".Translate()) }
 		};
