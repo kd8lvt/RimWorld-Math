@@ -76,14 +76,19 @@ Future plans:
 There's been a long standing bug where bills will reset to their default values and can't be updated. This has eluded me for some time, as no one could tell me *why* it was happening. But recently I got a lead on what might be causing it, and it's a top priority fix.
 Besides that, there's a couple small Better Workbench Management features left to implement.
 Copy/pasting is also a touch buggy, so I'll be working on that too.</CD.M.updates.1.4>
-	<CD.M.updates.1.4.2>Fixed a problem with Defaultie, where the take to stockpile/drop on floor button was overlapping their defaults button.
+	<CD.M.updates.1.4.3>New in 1.4.1:
+Fixed a problem with Defaultie, where the take to stockpile/drop on floor button was overlapping their defaults button.
 This should have no effect if you're not playing with Defaultie :)
 
-I also modified Count Equipped a bit, it's now "Count Inventory", and counts everything in Pawns' inventory, rather than just equippables.
+New in 1.4.2:
+Modified Count Equipped a bit, it's now "Count Inventory", and counts everything in Pawns' inventory, rather than just equippables.
 In doing so, it also works for non-equippable things, like meals and medicine.
 
+New in 1.4.3:
+"What's Missing?" functionality has been added. Let me know if anything is horribly broken with it.
+
 -K
-	</CD.M.updates.1.4.2>
+	</CD.M.updates.1.4.3>
 	
 	<!-- Info card -->
 	<CD.M.infocard.introduction.description>This menu provides a reference for the Math! mod, its functions and variables, and some examples of what you can do with them.
