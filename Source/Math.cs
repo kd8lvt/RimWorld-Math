@@ -82,11 +82,13 @@ namespace CrunchyDuck.Math {
 
 		/// <summary>
 		/// This ignores the package version, because tiny updates don't matter.
+		/// Update by Kd: All versions matter, imo. Some of them can have some pretty big changes even if they're technically a small update.
+		/// Just don't increment the version if it's not worth notifying about.
 		/// </summary>
 		public static bool IsNewImportantVersion(string version_to_check) {
 			var x = version.Split('.');
 			var y = version_to_check.Split('.');
-			return x[0] != y[0] || x[1] != y[1];
+			return x[0] != y[0] || x[1] != y[1] || x[2] != y[2];
 		}
 
 		public static bool IsNewImportantVersion() {
@@ -281,6 +283,11 @@ namespace CrunchyDuck.Math {
 				}
 			}
 		}
+
+		public static void ExtLog(string message)
+        {
+			if (MathSettings.settings.extlogging) Log.Message("[Math!] " + message);
+        }
 	}
 
 	public class InfiniteRecursionException : Exception {}

@@ -28,7 +28,9 @@ namespace CrunchyDuck.Math {
 			if (billTable.ContainsKey(load_id)) {
 				bill_comp = billTable[load_id];
 			}
-			else {
+			else
+			{
+				Math.ExtLog("Found bill with Load ID " + load_id + " (" + bill.Label + ") without a BillComponent. Creating a new one...");
 				bill_comp = new BillComponent(bill);
 				billTable[load_id] = bill_comp;
 			}
@@ -45,11 +47,12 @@ namespace CrunchyDuck.Math {
 		/// <summary>
 		/// Updates bills, mostly.
 		/// </summary>
-		public void MathTick() {
-			Math.ClearCacheMaps();
+		public void MathTick()
+        {
+            Math.ClearCacheMaps();
 
-			// Update linked bills.
-			foreach (BillLinkTracker blt in BillLinkTracker.linkIDs.Values) {
+            // Update linked bills.
+            foreach (BillLinkTracker blt in BillLinkTracker.linkIDs.Values) {
 				blt.UpdateChildren();
 			}
 
