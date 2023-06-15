@@ -38,9 +38,11 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.3704" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.3704" />
     <PackageReference Include="Lib.Harmony">
       <Version>2.2.2</Version>
     </PackageReference>
+    <PackageReference Include="Lib.Harmony" Version="2.2.2" />
     <Reference Include="NCalc, Version=3.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Assemblies\NCalc.dll</HintPath>
@@ -93,5 +95,6 @@
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
 </Project>

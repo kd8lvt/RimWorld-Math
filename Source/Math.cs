@@ -194,6 +194,14 @@ namespace CrunchyDuck.Math {
 			}
 			Expression e = new Expression(equation);
 			AddParameters(e, bc, parameter_list);
+			e.EvaluateFunction += (EvaluateFunctionHandler)delegate(string name,FunctionArgs args) {
+				if (name == "BoolToInt") {
+					var boolresult = args.Parameters[0].Evaluate();
+					if (boolresult != null && boolresult.GetType() == typeof(bool)) {
+						args.Result = ((bool)boolresult?1:0);
+					}
+				}
+			};
 			// KNOWN BUG: `if` equations don't properly update. This is an ncalc issue - it evaluates the current path and ignores the other.
 			if (e.HasErrors())
 				return false;

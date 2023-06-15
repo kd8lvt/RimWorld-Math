@@ -326,16 +326,16 @@ namespace CrunchyDuck.Math.MathFilters {
 			try {
 				// This whole thing feels absurd, but I don't know how else I'm meant to get the hunger rate.
 				// I searched everywhere but it does seem like the stats menu is the only location it's displayed with all modifiers.
-#if v1_3
+/*#if v1_3
 			Match match = v13_getIntake.Match(RaceProperties.NutritionEatenPerDayExplanation(p, showCalculations: true));
 			if (match.Success) {
 				intake += float.Parse(match.Groups[1].Value);
 			}
 			//intake += float.Parse(RaceProperties.NutritionEatenPerDayExplanation(p, showCalculations: true));
-#elif v1_4
+#elif v1_4*/
 				// See: Need_Food.BaseHungerRate
 				intake += float.Parse(RaceProperties.NutritionEatenPerDay(pawn));
-#endif
+//#endif
 			}
 			// This occurs if a pawn dies. Goes away on its own eventually.
 			catch (NullReferenceException) {
