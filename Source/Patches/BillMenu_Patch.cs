@@ -95,6 +95,7 @@ namespace CrunchyDuck.Math {
 
 		public static void Prefix(Bill_Production __instance, Rect baseRect, Color baseColor) {
 			var bc = BillManager.instance.AddGetBillComponent(__instance);
+			if (bc == null) return;
 			BillMenuData.AssignTo(bc);
 		}
 

@@ -12,9 +12,9 @@ namespace CrunchyDuck.Math {
 
 		public static bool Prefix(ref int __result, Bill_Production bill) {
 			var bc = BillManager.instance.AddGetBillComponent(bill);
-			// Use default behaviour.
+			if (bc == null) return true;// Use default behaviour.
 			if (!bc.customItemsToCount)
-				return true;
+				return true;// Use default behaviour.
 
 			Math.DoMath(bc.itemsToCount.lastValid, bc.itemsToCount);
 			__result = UnityEngine.Mathf.CeilToInt(bc.itemsToCount.CurrentValue);

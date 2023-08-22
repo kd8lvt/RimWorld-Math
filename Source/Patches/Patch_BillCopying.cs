@@ -35,6 +35,7 @@ namespace CrunchyDuck.Math {
 			if (!(b is Bill_Production bp))
 				return;
 			var bc = BillManager.instance.AddGetBillComponent(bp);
+			if (bc == null) return;
 			BillLinkTracker.currentlyCopied = bc.linkTracker;
 		}
 	}

@@ -13,6 +13,7 @@ namespace CrunchyDuck.Math {
 
 		public static void Postfix(Bill_Production __instance, Rect baseRect, Color baseColor) {
             BillComponent bc = BillManager.instance.AddGetBillComponent(__instance);
+            if (bc == null) return;
             BillLinkTracker blt = bc.linkTracker;
 			BillLinkTracker curr_copied = BillLinkTracker.currentlyCopied;
 

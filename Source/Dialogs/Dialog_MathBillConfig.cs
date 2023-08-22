@@ -58,6 +58,7 @@ namespace CrunchyDuck.Math {
 			this.billGiverPos = billGiverPos;
 			this.bill = bill;
 			bc = BillManager.instance.AddGetBillComponent(bill);
+			if (bc == null) return;
 			// I was pretty sure that buffer was set to lastValid *somewhere else*, but I can't find it anywhere in the code. Bad sign for my cleanliness.
 			bc.doUntilX.buffer = bc.doUntilX.lastValid;
 			bc.unpause.buffer = bc.unpause.lastValid;

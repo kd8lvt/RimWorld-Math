@@ -15,6 +15,7 @@ namespace CrunchyDuck.Math {
 			if (!(__instance is Bill_Production))
 				return true;
 			var bc = BillManager.instance.AddGetBillComponent((Bill_Production)__instance);
+			if (bc == null) return true;
 			__result = bc.name;
 			return false;
 		}

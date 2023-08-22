@@ -13,6 +13,7 @@ namespace CrunchyDuck.Math {
 		// Saves/loads data.
 		public static void Postfix(Bill_Production __instance) {
 			BillComponent b = BillManager.instance.AddGetBillComponent(__instance);
+			if (b == null) return;
 			b.ExposeData();
 		}
 	}

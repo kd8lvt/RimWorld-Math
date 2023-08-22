@@ -13,6 +13,7 @@ namespace CrunchyDuck.Math
 
         public static bool Prefix(Bill_Production bill) {
             var bc = BillManager.instance.AddGetBillComponent(bill);
+            if (bc == null) return true;
             // Skip this if custom item counting is in use.
             return !bc.customItemsToCount;
         }

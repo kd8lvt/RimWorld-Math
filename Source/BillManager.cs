@@ -24,17 +24,21 @@ namespace CrunchyDuck.Math {
 		// Create it if it doesn't exist and return it.
 		public BillComponent AddGetBillComponent(Bill_Production bill) {
 			int load_id = GetBillID(bill);
-			BillComponent bill_comp;
-			if (billTable.ContainsKey(load_id)) {
-				bill_comp = billTable[load_id];
-			}
-			else
-			{
-				Math.ExtLog("Found bill with Load ID " + load_id + " (" + bill.Label + ") without a BillComponent. Creating a new one...");
-				bill_comp = new BillComponent(bill);
-				billTable[load_id] = bill_comp;
-			}
-			return bill_comp;
+			if (load_id >= 0)
+            {
+				BillComponent bill_comp;
+				if (billTable.ContainsKey(load_id)) {
+					bill_comp = billTable[load_id];
+				}
+				else
+				{
+					Math.ExtLog("Found bill with Load ID " + load_id + " (" + bill.Label + ") without a BillComponent. Creating a new one...");
+					bill_comp = new BillComponent(bill);
+					billTable[load_id] = bill_comp;
+				}
+				return bill_comp;
+            }
+			return null;
 		}
 
 		public override void GameComponentTick() {
