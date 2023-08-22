@@ -144,7 +144,7 @@ namespace CrunchyDuck.Math {
 			else if (tab == InfoCardTab.CompositableLoadouts)
 				statEntries = GetCompositableLoadoutsEntries();
 
-            statsCache.SetValue(null, new List<string>());
+            statsCacheValues.SetValue(null, new List<string>());
 			statsCache.SetValue(null, statEntries);
 			StatsFinalize.Invoke(null, new object[] { statsCache.GetValue(null) });
 
