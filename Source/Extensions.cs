@@ -26,7 +26,9 @@ namespace CrunchyDuck.Math {
 		}
 
 		public static bool IsHeldByPawn(this Thing thing) {
-			var owner = thing?.holdingOwner?.Owner;
+			if (thing == null || thing.holdingOwner == null || thing.holdingOwner.Owner == null) return false;
+			
+			var owner = thing.holdingOwner.Owner;
 			if (owner is Pawn_InventoryTracker) {
 				return true;
 			}
