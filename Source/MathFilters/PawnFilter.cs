@@ -308,7 +308,17 @@ namespace CrunchyDuck.Math.MathFilters {
 		/// My definition does not include them.
 		/// </summary>
 		private static bool IsColonist(Pawn p) {
-			return !p.AnimalOrWildMan() && !p.IsPrisoner && !p.IsSlave && !IsGuest(p) && !p.IsColonyMech;
+			bool originalColCheck = !p.AnimalOrWildMan() && !p.IsPrisoner && !p.IsSlave && !IsGuest(p) && !p.IsColonyMech;
+			bool hasVehicleComp = false;
+			if (originalColCheck && ModLister.modsByPackageId.ContainsKey("smashphil.vehicleframework")) {
+				//Probably the WORST way I could do this. I have no other ideas though, more than willing to replace with a better option.
+				foreach (var comp in p.comps)
+				{
+					if (comp.GetType().Name == "CompVehicleMovementController") hasVehicleComp = true;
+				}
+			}
+
+			return originalColCheck && !hasVehicleComp;
 		}
 
 		/// <summary>
