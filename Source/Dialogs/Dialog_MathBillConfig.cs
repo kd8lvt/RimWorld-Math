@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using Verse.Sound;
 using HarmonyLib;
+using CrunchyDuck.Math.ModCompat;
 
 namespace CrunchyDuck.Math {
 
@@ -329,7 +330,12 @@ namespace CrunchyDuck.Math {
 			// Worker skill restriction.
 			if (bill.PawnRestriction == null && bill.recipe.workSkill != null && !bill.MechsOnly) {
 				listing.Label("AllowedSkillRange".Translate(bill.recipe.workSkill.label));
-				listing.IntRange(ref bill.allowedSkillRange, 0, 20);
+				int maxSkill = 20;
+				if (Math.endlessGrowthSupportEnabled)
+				{
+					maxSkill = EndlessGrowthSupport.GetMaxLevelForBill();
+				}
+				listing.IntRange(ref bill.allowedSkillRange, 0, maxSkill);
 			}
 			listing_standard.EndSection(listing);
 		}

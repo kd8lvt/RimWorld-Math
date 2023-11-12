@@ -43,6 +43,7 @@ namespace CrunchyDuck.Math {
 
 		public static bool rimfactorySupportEnabled = false;
 		public static bool compositableLoadoutsSupportEnabled = false;
+		public static bool endlessGrowthSupportEnabled = false;
 
 		static Math() {
 			Check3rdPartyMods();
@@ -114,12 +115,18 @@ namespace CrunchyDuck.Math {
 			compositableLoadoutsSupportEnabled =
 				LoadedModManager.RunningModsListForReading.Any(mod => mod.PackageId == "wiri.compositableloadouts");
 
+			endlessGrowthSupportEnabled =
+				LoadedModManager.RunningModsListForReading.Any(mod => mod.PackageId == "slimesenpai.endlessgrowth");
+
 			if (rimfactorySupportEnabled)
 				Log.Message("Math: PRF support enabled.");
 			
 			if (compositableLoadoutsSupportEnabled)
 				Log.Message("Math: Compositable Loadouts Support Enabled.");
-		}
+
+            if (endlessGrowthSupportEnabled)
+                Log.Message("Math: Endless Growth Support Enabled.");
+        }
 
 		private static void PerformPatches() {
 			// What can I say, I prefer a manual method of patching.
