@@ -86,7 +86,7 @@ namespace CrunchyDuck.Math {
 				fields_rect = fields_rect.ContractedBy(HorizontalPadding, 2);
 				// Delete button
 				Rect delete_button_rect = fields_rect.ChopRectRight(DeleteButSize, 0);
-				if (Widgets.ButtonImage(delete_button_rect, TexButton.DeleteX, Color.white, GenUI.SubtleMouseoverColor)) {
+				if (Widgets.ButtonImage(delete_button_rect, TexButton.Delete, Color.white, GenUI.SubtleMouseoverColor)) {
 					uvs.RemoveAt(i);
 					i--;
 					continue;

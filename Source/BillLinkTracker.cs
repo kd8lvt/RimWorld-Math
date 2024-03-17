@@ -390,7 +390,7 @@ namespace CrunchyDuck.Math {
 				update = (from, to) => to.bc.targetBill.qualityRange = from.bc.targetBill.qualityRange;
 				countQuality = new LinkSetting(owner, "CD.M.link.count_quality".Translate(), update);
 
-				update = (from, to) => to.bc.targetBill.includeFromZone = from.bc.targetBill.includeFromZone;
+				update = (from, to) => to.bc.targetBill.includeGroup = from.bc.targetBill.includeGroup;
 				checkStockpile = new LinkSetting(owner, "CD.M.link.check_stockpile".Translate(), update);
 
 				update = (from, to) => to.bc.targetBill.ingredientSearchRadius = from.bc.targetBill.ingredientSearchRadius;

@@ -8,6 +8,7 @@ using System.Text;
 using Verse.Sound;
 using HarmonyLib;
 using CrunchyDuck.Math.ModCompat;
+using LudeonTK;
 
 namespace CrunchyDuck.Math {
 
@@ -222,8 +223,8 @@ namespace CrunchyDuck.Math {
 
 					// Drop down menu for where to search.
 					var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Zone_Stockpile>>>)(b => GenerateStockpileInclusion());
-					string button_label = bill.includeFromZone == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeFromZone.label);
-					Widgets.Dropdown(listing.GetRect(30f), bill, b => b.includeFromZone, f, button_label);
+					string button_label = bill.includeGroup == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeGroup.StorageGroup.label);
+					Widgets.Dropdown(listing.GetRect(30f), bill, b => (Zone_Stockpile)b.GetSlotGroup(), f, button_label);
 
 					// Hitpoints slider.
 					if (bill.recipe.products.Any<ThingDefCountClass>(prod => prod.thingDef.useHitPoints)) {
@@ -262,8 +263,8 @@ namespace CrunchyDuck.Math {
 		private void RenderStockpileSettings(Listing_Standard listing_standard) {
 			// Take to stockpile
 			Listing_Standard listing2 = listing_standard.BeginSection(StoreModeSubdialogHeight);
-			string label1 = string.Format(bill.GetStoreMode().LabelCap, bill.GetStoreZone() != null ? bill.GetStoreZone().SlotYielderLabel() : "");
-			if (bill.GetStoreZone() != null && !bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(bill, bill.GetStoreZone())) {
+			string label1 = string.Format(bill.GetStoreMode().LabelCap, bill.GetSlotGroup() != null ? bill.GetSlotGroup().StorageGroup.label : "");
+			if (bill.GetSlotGroup() != null && !bill.recipe.WorkerCounter.CanPossiblyStore(bill, bill.GetSlotGroup())) {
 				label1 += string.Format(" ({0})", "IncompatibleLower".Translate());
 				Text.Font = GameFont.Tiny;
 			}
@@ -277,10 +278,10 @@ namespace CrunchyDuck.Math {
 						for (int index = 0; index < count; ++index) {
 							SlotGroup group = listInPriorityOrder[index];
 							if (group.parent is Zone_Stockpile parent) {
-								if (!bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(bill, parent))
+								if (!bill.recipe.WorkerCounter.CanPossiblyStore(bill, parent.slotGroup))
 									options.Add(new FloatMenuOption(string.Format("{0} ({1})", string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), "IncompatibleLower".Translate()), null));
 								else
-									options.Add(new FloatMenuOption(string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), () => bill.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, (Zone_Stockpile)group.parent)));
+									options.Add(new FloatMenuOption(string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), () => bill.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, ((Zone_Stockpile)group.parent).GetSlotGroup())));
 							}
 						}
 					}
@@ -352,11 +353,11 @@ namespace CrunchyDuck.Math {
 			if (!only_fixed_ingredients) {
 				rect5.yMin = rect5.yMax - IngredientRadiusSubdialogHeight;
 				rect_right.yMax = rect5.yMin - 17f;
-				bool num = bill.GetStoreZone() == null || bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(bill, bill.GetStoreZone());
-				ThingFilterUI.DoThingFilterConfigWindow(rect_right, thingFilterState, bill.ingredientFilter, bill.recipe.fixedIngredientFilter, 4, null, HiddenSpecialThingFilters.ConcatIfNotNull(bill.recipe.forceHiddenSpecialFilters), forceHideHitPointsConfig: false, bill.recipe.GetPremultipliedSmallIngredients(), bill.Map);
-				bool flag2 = bill.GetStoreZone() == null || bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(bill, bill.GetStoreZone());
+				bool num = bill.GetSlotGroup() == null || bill.recipe.WorkerCounter.CanPossiblyStore(bill, bill.GetSlotGroup());
+				ThingFilterUI.DoThingFilterConfigWindow(rect_right, thingFilterState, bill.ingredientFilter, bill.recipe.fixedIngredientFilter, 4, null, HiddenSpecialThingFilters.ConcatIfNotNull(bill.recipe.forceHiddenSpecialFilters), forceHideHitPointsConfig: false, map: bill.Map, suppressSmallVolumeTags: bill.recipe.GetPremultipliedSmallIngredients());
+				bool flag2 = bill.GetSlotGroup() == null || bill.recipe.WorkerCounter.CanPossiblyStore(bill, bill.GetSlotGroup());
 				if (num && !flag2) {
-					Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(bill.LabelCap, bill.billStack.billGiver.LabelShort.CapitalizeFirst(), bill.GetStoreZone().label), bill.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, historical: false);
+					Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(bill.LabelCap, bill.billStack.billGiver.LabelShort.CapitalizeFirst(), bill.GetSlotGroup().StorageGroup.label), bill.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, historical: false);
 				}
 			}
 			else {
@@ -712,7 +713,7 @@ namespace CrunchyDuck.Math {
 			// All stockpiles.
 			yield return new Widgets.DropdownMenuElement<Zone_Stockpile> {
 				option = new FloatMenuOption("IncludeFromAll".Translate(), delegate {
-					bill.includeFromZone = null;
+					bill.includeGroup = null;
 				}),
 				payload = null
 			};
@@ -724,7 +725,7 @@ namespace CrunchyDuck.Math {
 			while (i < groupCount) {
 				SlotGroup slotGroup = groupList[i];
 				if (slotGroup.parent is Zone_Stockpile stockpile) {
-					if (!bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(bill, stockpile)) {
+					if (!bill.recipe.WorkerCounter.CanPossiblyStore(bill, stockpile.slotGroup)) {
 						yield return new Widgets.DropdownMenuElement<Zone_Stockpile> {
 							option = new FloatMenuOption(string.Format("{0} ({1})", "IncludeSpecific".Translate(slotGroup.parent.SlotYielderLabel()), "IncompatibleLower".Translate()), null),
 							payload = stockpile
@@ -733,7 +734,7 @@ namespace CrunchyDuck.Math {
 					else {
 						yield return new Widgets.DropdownMenuElement<Zone_Stockpile> {
 							option = new FloatMenuOption("IncludeSpecific".Translate(slotGroup.parent.SlotYielderLabel()), delegate {
-								bill.includeFromZone = stockpile;
+								bill.includeGroup = stockpile.slotGroup;
 							}),
 							payload = stockpile
 						};

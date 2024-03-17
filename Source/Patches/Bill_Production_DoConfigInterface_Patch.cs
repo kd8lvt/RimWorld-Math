@@ -49,8 +49,9 @@ namespace CrunchyDuck.Math {
 				}
                 // Link symbol
                 Rect img = button_rect.ContractedBy(2);
-                var col = Mouse.IsOver(button_rect) ? Widgets.MouseoverOptionColor : Widgets.NormalOptionColor;
-				GUI.DrawTexture(img, Resources.linkImage, ScaleMode.ScaleToFit, true, 1, butt_enabled ? col : Color.gray, 0, 0);
+                //TL;DR - something changed and idk how to color things now ;-;.
+                //var col = Mouse.IsOver(button_rect) ? Widgets.MouseoverOptionColor : Widgets.NormalOptionColor;
+				Widgets.DrawTextureFitted(img, Resources.linkImage, 1f);
 
                 TooltipHandler.TipRegion(button_rect, butt_enabled ? "CD.M.tooltips.make_link".Translate() : "CD.M.tooltips.link_paradox".Translate());
             }

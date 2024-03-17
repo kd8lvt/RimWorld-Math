@@ -18,7 +18,7 @@ namespace CrunchyDuck.Math.ModCompat {
 		public static Func<Pawn, bool> IsValidLoadoutHolder = AccessTools.MethodDelegate<Func<Pawn, bool>>(
 			AccessTools.Method(LoadoutUtilityType, "IsValidLoadoutHolder"));
 		public static IReadOnlyList<Pawn> GetPawnsWithTag(object tag) {
-			return ((SerializablePawnList) LoadoutManagerPawnTagsField(GetLoadoutManager())[tag]).Pawns;
+			return ((IReadOnlyList<Pawn>) LoadoutManagerPawnTagsField(GetLoadoutManager())[tag]);
 		}
 
 		public static IReadOnlyList<object> GetTags() {
