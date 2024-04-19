@@ -23,6 +23,9 @@ namespace CrunchyDuck.Math.MathFilters {
 			{ "colonists", p => IsColonist(p) },
 			{ "col", p => IsColonist(p) },
 
+			{ "ghoul", p => p.IsGhoul },
+			{ "gh", p => p.IsGhoul },
+
 			{ "mechanitors", p => p.mechanitor != null },
 			{ "mech", p => p.mechanitor != null },
 
@@ -308,7 +311,7 @@ namespace CrunchyDuck.Math.MathFilters {
 		/// My definition does not include them.
 		/// </summary>
 		private static bool IsColonist(Pawn p) {
-			bool originalColCheck = !p.AnimalOrWildMan() && !p.IsPrisoner && !p.IsSlave && !IsGuest(p) && !p.IsColonyMech;
+			bool originalColCheck = !p.AnimalOrWildMan() && !p.IsPrisoner && !p.IsSlave && !IsGuest(p) && !p.IsColonyMech && !p.IsGhoul;
 			bool hasVehicleComp = false;
 			if (originalColCheck && ModLister.modsByPackageId.ContainsKey("smashphil.vehicleframework")) {
 				//Probably the WORST way I could do this. I have no other ideas though, more than willing to replace with a better option.
