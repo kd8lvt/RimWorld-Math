@@ -43,7 +43,17 @@ namespace CrunchyDuck.Math {
 				if (spts != null) {
 					// Check if butchery
 					// TODO: For some reason the "Count products" on butchery bills doesn't work. Suspect they're using custom counting logic as meat isn't like others.
+					//
+					// Update:
+					// I think I fixed this. Maybe. Perhaps.
+					// Funnily enough, this was impacting Medieval Overhaul's timber lmfao
+					// -Kd
 					foreach (var spt in bill.recipe.specialProducts) {
+						if (bill.recipe.WorkerCounter != null && bill.recipe.WorkerCounter is RecipeWorkerCounter)
+                        {
+							itemsToCount.SetAll("\"category "+bill.recipe.workerCounterInt.ProductsDescription(bill)+"\"");
+							break;
+                        }
 						if (spt == SpecialProductType.Butchery) {
 							itemsToCount.SetAll("\"category meat\"");
 							break;
