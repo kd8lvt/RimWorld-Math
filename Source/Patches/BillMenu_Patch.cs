@@ -59,7 +59,6 @@ namespace CrunchyDuck.Math {
 			return AccessTools.Method(typeof(Bill_Production), "DoConfigInterface");
 		}
 
-#if v1_4
 		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
 			var codes = new List<CodeInstruction>(instructions);
 			MethodInfo button_icon_method = AccessTools.Method(typeof(WidgetRow), "ButtonIcon");
@@ -91,7 +90,6 @@ namespace CrunchyDuck.Math {
 			}
 			return codes.AsEnumerable();
 		}
-#endif
 
 		public static void Prefix(Bill_Production __instance, Rect baseRect, Color baseColor) {
 			var bc = BillManager.instance.AddGetBillComponent(__instance);
