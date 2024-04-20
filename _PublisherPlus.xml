@@ -2,12 +2,12 @@
 <Configuration>
   <Excluded>
     <exclude>.git</exclude>
-    <exclude>.vs</exclude>
     <exclude>About\infocard.png</exclude>
     <exclude>About\tesco_meal_deal.png</exclude>
     <exclude>About\tesco_meal_deal2.png</exclude>
     <exclude>About\tesco_meal_deal3.png</exclude>
     <exclude>About\typed_in_math.png</exclude>
     <exclude>Source</exclude>
+    <exclude>v1.3</exclude>
   </Excluded>
 </Configuration>

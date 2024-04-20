@@ -76,6 +76,10 @@ falconne, who made [url=https://steamcommunity.com/sharedfiles/filedetails/?id=9
 	<loadAfter>
 		<li>Ludeon.RimWorld</li>
 		<li>brrainz.harmony</li>
+		<li>ludeon.rimworld.royalty</li>
+		<li>Ludeon.RimWorld.ideology</li>
+		<li>Ludeon.RimWorld.biotech</li>
+		<li>Ludeon.RimWorld.anomaly</li>
 	</loadAfter>
 	<incompatibleWith>
 	  <li>falconne.BWM</li>
