@@ -262,15 +262,15 @@ namespace CrunchyDuck.Math {
 
         private static void PushCachedMap(CachedMapData newMapCache)
         {
-            if (newMapCache == null)
+            if (newMapCache == default)
             {
-				Log.Message($"Unexpected Error; Attempt to push null at cached map.");
+				//TODO: implement deletion of removed maps caches.
 				return;
             }
 
             if (cachedMaps.ContainsKey(newMapCache.GetMap))
-            {
-                cachedMaps[newMapCache.GetMap] = newMapCache;
+			{
+				cachedMaps[newMapCache.GetMap] = newMapCache;
 				return;
             }
 

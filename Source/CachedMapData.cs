@@ -58,7 +58,26 @@ namespace CrunchyDuck.Math {
         }
 
         private async Task PerformUpdate(Action<CachedMapData> onUpdate)
-            => onUpdate?.Invoke(new CachedMapData(this.GetMap));
+        {
+            CachedMapData newMapData = default;
+
+			try
+            {
+                newMapData = new CachedMapData(this.GetMap);
+
+
+            }
+            catch (NullReferenceException)
+            {
+				// Map was destroyed.
+				onUpdate?.Invoke(default);
+				return;
+			}
+            
+            onUpdate?.Invoke(newMapData);
+		}
+
+        
 
         public bool SearchVariable(string input, BillComponent bc, out float count) {
 			count = 0;
