@@ -1,15 +1,17 @@
-﻿using CrunchyDuck.Math.MathFilters;
+﻿using System;
+using CrunchyDuck.Math.MathFilters;
 using CrunchyDuck.Math.ModCompat;
 using RimWorld;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Verse;
 using ThingFilter = CrunchyDuck.Math.MathFilters.ThingFilter;
 
 namespace CrunchyDuck.Math {
 	// TODO: Add in checking against pawn skills, like "get all pawns with shooting > 3"
 	public class CachedMapData {
-		private Map map;
+		private readonly Map map;
 		private static Regex v13_getIntake = new Regex(@"Final value: (\d+(?:.\d+)?)", RegexOptions.Compiled);
 
 		public Dictionary<string, Pawn> pawns_dict = new Dictionary<string, Pawn>();
@@ -17,21 +19,26 @@ namespace CrunchyDuck.Math {
 		public List<Thing> ownedAnimals = new List<Thing>();
 		public Dictionary<string, List<Thing>> resources = new Dictionary<string, List<Thing>>();
 
-		public CachedMapData(Map map) {
+        public Map GetMap => map;
+        public bool UpdateRequested { get; private set; } = false;
+
+        public CachedMapData(Map map) {
 			this.map = map;
 
 			foreach (Pawn p in map.mapPawns.AllPawns) {
-				bool in_faction = p.Faction == Faction.OfPlayer;
+				var in_faction = p.Faction == Faction.OfPlayer;
+				if (!in_faction) continue;
+                
 				bool animal = p.AnimalOrWildMan();
 				bool guest = p.IsQuestLodger() || p.guest?.HostFaction == Faction.OfPlayer;
 				bool prisoner = p.IsPrisonerOfColony;
 				bool slave = p.IsSlaveOfColony;
 
-				if (animal && in_faction) {
+				if (animal) {
 					ownedAnimals.Add(p);
 					pawns_dict[p.LabelShort.ToParameter()] = p;
 				}
-				else {
+				else { //TODO: optimize here.
 					if (in_faction || guest || prisoner || slave) {
 						humanPawns.Add(p);
 						pawns_dict[p.LabelShort.ToParameter()] = p;
@@ -40,7 +47,20 @@ namespace CrunchyDuck.Math {
 			}
 		}
 
-		public bool SearchVariable(string input, BillComponent bc, out float count) {
+		// Ugly async call from sync method. TODO: add Cancelation Token at least.
+        public void RequestUpdate(Action<CachedMapData> onUpdate)
+        {
+			if(UpdateRequested) return;
+            UpdateRequested = true;
+#pragma warning disable 4014
+            PerformUpdate(onUpdate);
+#pragma warning restore 4014
+        }
+
+        private async Task PerformUpdate(Action<CachedMapData> onUpdate)
+            => onUpdate?.Invoke(new CachedMapData(this.GetMap));
+
+        public bool SearchVariable(string input, BillComponent bc, out float count) {
 			count = 0;
 			string[] commands = input.Split('.');
 			MathFilter filter = null;

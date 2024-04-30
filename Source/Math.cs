@@ -32,7 +32,7 @@ namespace CrunchyDuck.Math {
 		public static string version = "1.4.3";
 
 		// Cached variables
-		private static Dictionary<Map, CachedMapData> cachedMaps = new Dictionary<Map, CachedMapData>();
+		private static readonly Dictionary<Map, CachedMapData> cachedMaps = new Dictionary<Map, CachedMapData>();
 
 		private static Regex variableNames = new Regex(@"(?:""(?:v|variables)\.)(.+?)(?:"")", RegexOptions.Compiled);
 		private static Regex parameterNames = new Regex("(?:(\")(.+?)(\"))|([a-zA-Z0-9]+)", RegexOptions.Compiled);
@@ -154,8 +154,12 @@ namespace CrunchyDuck.Math {
 			harmony.Patch((MethodBase)type.GetMethod("Target").Invoke(null, null), prefix: prefix, postfix: postfix, transpiler: trans);
 		}
 
-		public static void ClearCacheMaps() {
-			cachedMaps = new Dictionary<Map, CachedMapData>();
+		public static void ClearCacheMaps()  // TODO: Rename to Update maps once finished.
+        {
+            foreach (var pair in cachedMaps.ToArray())
+            {
+                pair.Value?.RequestUpdate(PushCachedMap);
+            }
 		}
 
 		public static bool DoMath(string equation, InputField field) {
@@ -243,17 +247,37 @@ namespace CrunchyDuck.Math {
 
 		public static CachedMapData GetCachedMap(Map map) {
 			// I was able to get a null error by abandoning a base. This handles that.
-			if (map == null)
-				return null;
-			if (!cachedMaps.ContainsKey(map)) {
-				// Generate cache.
-				cachedMaps[map] = new CachedMapData(map);
-			}
-			CachedMapData cache = cachedMaps[map];
-			return cache;
+			if (map == null) return null;
+
+            if (cachedMaps.TryGetValue(map, out var foundCachedMap))
+            {
+                return foundCachedMap;
+
+            }
+
+            var newCachedMap = new CachedMapData(map);
+			PushCachedMap(newCachedMap);
+			return newCachedMap;
 		}
 
-		public static bool ParseUserVariables(ref string str, int recursion_level = 0) {
+        private static void PushCachedMap(CachedMapData newMapCache)
+        {
+            if (newMapCache == null)
+            {
+				Log.Message($"Unexpected Error; Attempt to push null at cached map.");
+				return;
+            }
+
+            if (cachedMaps.ContainsKey(newMapCache.GetMap))
+            {
+                cachedMaps[newMapCache.GetMap] = newMapCache;
+				return;
+            }
+
+			cachedMaps.Add(newMapCache.GetMap, newMapCache);
+        }
+
+        public static bool ParseUserVariables(ref string str, int recursion_level = 0) {
 			if (recursion_level >= 5)
 				throw new InfiniteRecursionException();
 			Match match = variableNames.Match(str, 0);
