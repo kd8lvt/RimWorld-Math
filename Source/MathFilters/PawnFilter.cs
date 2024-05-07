@@ -6,9 +6,11 @@ using System.Linq;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CrunchyDuck.Math.MathFilters {
-	class PawnFilter : MathFilter {
-		Dictionary<string, Pawn> contains = new Dictionary<string, Pawn>();
+namespace CrunchyDuck.Math.MathFilters 
+{
+	internal class PawnFilter : MathFilter 
+	{
+		Dictionary<string, Pawn> _contains = new Dictionary<string, Pawn>();
 		private bool primedForTrait = false;
 		private bool primedIncapable = false;
 		private bool primedCapable = false;
@@ -58,15 +60,17 @@ namespace CrunchyDuck.Math.MathFilters {
 			{ "intake", GetIntake },
 		};
 
-        public PawnFilter(BillComponent bc) {
+        public PawnFilter(BillComponent bc) 
+        {
 			// Pawns who share the same name will only be counted once.
 			//This shouldn't be a problem for most people,
 			// and right now I'm not mentioning it anywhere so people don't complain about it.
-			contains = bc.Cache.pawns_dict;
+			_contains = bc.Cache.pawns_dict;
 		}
 
-		public override float Count() {
-			return contains.Count;
+		public override float Count() 
+		{
+			return _contains.Count;
 		}
 
 		public override ReturnType Parse(string command, out object result) {
@@ -80,12 +84,12 @@ namespace CrunchyDuck.Math.MathFilters {
 				canCount = true;
 
 				Dictionary<string, Pawn> filtered_pawns = new Dictionary<string, Pawn>();
-				foreach (KeyValuePair<string, Pawn> entry in contains) {
+				foreach (KeyValuePair<string, Pawn> entry in _contains) {
 					if (HasTrait(entry.Value, command)) {
 						filtered_pawns[entry.Key] = entry.Value;
 					}
 				}
-				contains = filtered_pawns;
+				_contains = filtered_pawns;
 				result = this;
 				return ReturnType.PawnFilter;
 			}
@@ -158,7 +162,7 @@ namespace CrunchyDuck.Math.MathFilters {
 				canCount = true;
 
 				Dictionary<string, Pawn> filtered_pawns = new Dictionary<string, Pawn>();
-				foreach (KeyValuePair<string,Pawn> entry in contains)
+				foreach (KeyValuePair<string,Pawn> entry in _contains)
                 {
 					if (entry.Value.IsColonist)
                     {
@@ -179,7 +183,7 @@ namespace CrunchyDuck.Math.MathFilters {
                     }
                 }
 
-				contains = filtered_pawns;
+				_contains = filtered_pawns;
 				result = this;
 				return ReturnType.PawnFilter;
             }
@@ -192,7 +196,7 @@ namespace CrunchyDuck.Math.MathFilters {
 
 				// Filter pawns.
 				Dictionary<string, Pawn> filtered_pawns = new Dictionary<string, Pawn>();
-				foreach (KeyValuePair<string, Pawn> entry in contains) {
+				foreach (KeyValuePair<string, Pawn> entry in _contains) {
 					bool incapable;
 					if (tag == WorkTags.None)
 						incapable = entry.Value.CombinedDisabledWorkTags == WorkTags.None;
@@ -206,7 +210,7 @@ namespace CrunchyDuck.Math.MathFilters {
 				primedIncapable = false;
 				primedCapable = false;
 				canCount = true;
-				contains = filtered_pawns;
+				_contains = filtered_pawns;
 				result = this;
 				return ReturnType.PawnFilter;
             }
@@ -241,9 +245,9 @@ namespace CrunchyDuck.Math.MathFilters {
             }
 
             // Search pawn.
-            if (contains.ContainsKey(command)) {
-				contains = new Dictionary<string, Pawn>() {
-					{ command, contains[command] }
+            if (_contains.ContainsKey(command)) {
+				_contains = new Dictionary<string, Pawn>() {
+					{ command, _contains[command] }
 				};
 				result = this;
 				return ReturnType.PawnFilter;
@@ -252,12 +256,12 @@ namespace CrunchyDuck.Math.MathFilters {
 			if (filterMethods.ContainsKey(command)) {
 				var method = filterMethods[command];
 				Dictionary<string, Pawn> filtered_pawns = new Dictionary<string, Pawn>();
-				foreach(KeyValuePair<string, Pawn> entry in contains) {
+				foreach(KeyValuePair<string, Pawn> entry in _contains) {
 					if (method.Invoke(entry.Value)) {
 						filtered_pawns[entry.Key] = entry.Value;
 					}
 				}
-				contains = filtered_pawns;
+				_contains = filtered_pawns;
 				result = this;
 				return ReturnType.PawnFilter;
 			}
@@ -265,7 +269,7 @@ namespace CrunchyDuck.Math.MathFilters {
 			if (counterMethods.ContainsKey(command)) {
 				var method = counterMethods[command];
 				float count = 0;
-				foreach (Pawn p in contains.Values) {
+				foreach (Pawn p in _contains.Values) {
 					count += method.Invoke(p);
 				}
 				result = count;

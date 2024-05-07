@@ -53,7 +53,7 @@ namespace CrunchyDuck.Math {
 		/// </summary>
 		public void MathTick()
         {
-            Math.ClearCacheMaps();
+            Math.UpdateMapCache();
 
             // Update linked bills.
             foreach (BillLinkTracker blt in BillLinkTracker.linkIDs.Values) {

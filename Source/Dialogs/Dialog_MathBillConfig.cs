@@ -91,8 +91,9 @@ namespace CrunchyDuck.Math {
 
 			// This ensures that the map cache is updated.
 			// Since the game is paused, this won't cause lag.
-			if (RealTime.frameCount % 60 == 0) {
-				Math.ClearCacheMaps();
+			if (RealTime.frameCount % 60 == 0) 
+			{
+				Math.UpdateMapCache(forceCachePurge: true);
 				BillManager.UpdateBill(bc);
 			}
 

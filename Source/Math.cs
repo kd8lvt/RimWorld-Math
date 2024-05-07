@@ -8,8 +8,10 @@ using NCalc;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
-namespace CrunchyDuck.Math {
+namespace CrunchyDuck.Math 
+{
 	// TODO: Show decimal values in Currently Have, Repeat and Unpause At, but round the ultimate value.
 	// TODO: Method to "resolve" a calculation, so it doesn't remember what you've typed in. This would be triggered by ctrl + enter
 	// TODO: Add math variable name to the i menu of all objects.
@@ -32,10 +34,11 @@ namespace CrunchyDuck.Math {
 		public static string version = "1.4.3";
 
 		// Cached variables
-		private static Dictionary<Map, CachedMapData> cachedMaps = new Dictionary<Map, CachedMapData>();
+		private static readonly Dictionary<Map, CachedMapData> cachedMaps = new Dictionary<Map, CachedMapData>();
 
 		private static Regex variableNames = new Regex(@"(?:""(?:v|variables)\.)(.+?)(?:"")", RegexOptions.Compiled);
 		private static Regex parameterNames = new Regex("(?:(\")(.+?)(\"))|([a-zA-Z0-9]+)", RegexOptions.Compiled);
+		private static CancellationTokenSource _localCts;
 		public static Dictionary<string, ThingDef> searchableThings = new Dictionary<string, ThingDef>();
 		public static Dictionary<string, StatDef> searchableStats = new Dictionary<string, StatDef>();
 		public static Dictionary<string, (TraitDef traitDef, int index)> searchableTraits = new Dictionary<string, (TraitDef, int)>();
@@ -45,7 +48,9 @@ namespace CrunchyDuck.Math {
 		public static bool compositableLoadoutsSupportEnabled = false;
 		public static bool endlessGrowthSupportEnabled = false;
 
-		static Math() {
+		
+		static Math() 
+		{
 			Check3rdPartyMods();
 			PerformPatches();
 
@@ -67,7 +72,8 @@ namespace CrunchyDuck.Math {
 			}
 
 			// Make counter methods.
-			foreach (StatDef stat in searchableStats.Values) {
+			foreach (StatDef stat in searchableStats.Values) 
+			{
 				string label = stat.label.ToParameter();
 				// Thing methods
 				Func<Thing, float> t_method = t => t.GetStatValue(stat) * t.stackCount;
@@ -92,11 +98,13 @@ namespace CrunchyDuck.Math {
 			return x[0] != y[0] || x[1] != y[1] || x[2] != y[2];
 		}
 
-		public static bool IsNewImportantVersion() {
+		public static bool IsNewImportantVersion() 
+		{
 			return IsNewImportantVersion(MathSettings.settings.lastVersionInfocardChecked);
 		}
 
-		private static void IndexDefs<T>(Dictionary<string, T> dict) where T : Def {
+		private static void IndexDefs<T>(Dictionary<string, T> dict) where T : Def 
+		{
 			var thing_list = DefDatabase<T>.AllDefs;
 
 			foreach (T def in thing_list) {
@@ -128,7 +136,8 @@ namespace CrunchyDuck.Math {
                 Log.Message("Math: Endless Growth Support Enabled.");
         }
 
-		private static void PerformPatches() {
+		private static void PerformPatches() 
+		{
 			// What can I say, I prefer a manual method of patching.
 			var harmony = new Harmony("CrunchyDuck.Math");
 			AddPatch(harmony, typeof(Patch_ExposeBillComponent));
@@ -142,23 +151,41 @@ namespace CrunchyDuck.Math {
 			AddPatch(harmony, typeof(Patch_BillStack_DoListing));
 			AddPatch(harmony, typeof(Patch_BillCopying));
 
-			if (rimfactorySupportEnabled)  {
+			if (rimfactorySupportEnabled)  
+			{
 				AddPatch(harmony, typeof(Patch_RimFactory_RecipeWorkerCounter_CountProducts));
 			}
 		}
 
-		private static void AddPatch(Harmony harmony, Type type) {
+		private static void AddPatch(Harmony harmony, Type type) 
+		{
 			var prefix = type.GetMethod("Prefix") != null ? new HarmonyMethod(type, "Prefix") : null;
 			var postfix = type.GetMethod("Postfix") != null ? new HarmonyMethod(type, "Postfix") : null;
 			var trans = type.GetMethod("Transpiler") != null ? new HarmonyMethod(type, "Transpiler") : null;
 			harmony.Patch((MethodBase)type.GetMethod("Target").Invoke(null, null), prefix: prefix, postfix: postfix, transpiler: trans);
 		}
 
-		public static void ClearCacheMaps() {
-			cachedMaps = new Dictionary<Map, CachedMapData>();
+		public static void UpdateMapCache(bool forceCachePurge = false) 
+        {
+	        _localCts?.Cancel(); // We want be sure all prev requests are canceled, if we send a new one.
+	        _localCts?.Dispose();
+	        _localCts = new CancellationTokenSource();
+	        
+	        if (!forceCachePurge)
+	        {
+		        foreach (var pair in cachedMaps.ToArray())
+		        {
+			        pair.Value?.RequestUpdate(PushCachedMap, _localCts.Token);
+		        }
+		        return;
+	        }
+	        //in case of forced updated we just clean it and game will do sync update once cache is requested.
+			cachedMaps.Clear();
+	        
 		}
 
-		public static bool DoMath(string equation, InputField field) {
+		public static bool DoMath(string equation, InputField field) 
+		{
 			float res = 0;
 			if (!DoMath(equation, field.bc, ref res))
 				return false;
@@ -167,22 +194,27 @@ namespace CrunchyDuck.Math {
 		}
 
 			/// <returns>True if sequence is valid.</returns>
-		public static bool DoMath(string equation, BillComponent bc, ref float result) {
+		public static bool DoMath(string equation, BillComponent bc, ref float result) 
+			{
 			if (equation.NullOrEmpty())
 				return false;
 
-			try {
+			try 
+			{
 				if (!ParseUserVariables(ref equation))
 					return false;
 			}
 			// TODO: Some way of notifying the user that they performed infinite recursion.
-			catch (InfiniteRecursionException) {
+			catch (InfiniteRecursionException) 
+			{
 				return false;
 			}
 			List<string> parameter_list = new List<string>();
-			foreach (Match match in parameterNames.Matches(equation)) {
+			foreach (Match match in parameterNames.Matches(equation)) 
+			{
 				// Matched single word.
-				if (match.Groups[4].Success) {
+				if (match.Groups[4].Success) 
+				{
 					parameter_list.Add(match.Groups[4].Value);
 					continue;
 				}
@@ -205,55 +237,83 @@ namespace CrunchyDuck.Math {
 			if (e.HasErrors())
 				return false;
 			object ncalc_result;
-			try {
+			try 
+			{
 				ncalc_result = e.Evaluate();
 			}
 			// For some reason, HasErrors() doesn't check if parameters are valid.
-			catch (ArgumentException) {
+			catch (ArgumentException) 
+			{
 				return false;
 			}
 
-			Type type = ncalc_result.GetType();
-			Type[] accepted_types = new Type[] { typeof(int), typeof(decimal), typeof(double), typeof(float) };
+			var type = ncalc_result.GetType();
+			var accepted_types = new Type[] { typeof(int), typeof(decimal), typeof(double), typeof(float) };
 			if (!accepted_types.Contains(type))
 				return false;
 
-			try {
+			try 
+			{
 				// this is dumb but necessary
 				result = (int)Convert.ChangeType(Convert.ChangeType(ncalc_result, type), typeof(int));
 			}
 			// Divide by 0, mostly.
-			catch (OverflowException) {
+			catch (OverflowException) 
+			{
 				result = 999999;
 			}
 			return true;
 		}
 
-		public static CachedMapData GetCachedMap(Bill_Production bp) {
-			if (bp == null)
-				return null;
-			try {
-				Map map = bp.Map;
+		public static CachedMapData GetCachedMap(Bill_Production bp) 
+		{
+			if (bp == null) return null;
+			try 
+			{
+				var map = bp.Map;
 				return GetCachedMap(bp.Map);
 			}
-			catch (NullReferenceException) {
+			catch (NullReferenceException) 
+			{
 				return null;
 			}
 		}
 
-		public static CachedMapData GetCachedMap(Map map) {
+		private static CachedMapData GetCachedMap(Map map) 
+		{
 			// I was able to get a null error by abandoning a base. This handles that.
-			if (map == null)
-				return null;
-			if (!cachedMaps.ContainsKey(map)) {
-				// Generate cache.
-				cachedMaps[map] = new CachedMapData(map);
-			}
-			CachedMapData cache = cachedMaps[map];
-			return cache;
+			if (map == null) return null;
+
+            if (cachedMaps.TryGetValue(map, out var foundCachedMap))
+            {
+                return foundCachedMap;
+
+            }
+
+            var newCachedMap = new CachedMapData(map, CancellationToken.None); // We do our initial sync cache. We don't want it to be canceled. 
+			PushCachedMap(newCachedMap);
+			return newCachedMap;
 		}
 
-		public static bool ParseUserVariables(ref string str, int recursion_level = 0) {
+        private static void PushCachedMap(CachedMapData newMapCache)
+        {
+            if (newMapCache == default)
+            {
+				//TODO: implement deletion of removed maps caches.
+				return;
+            }
+
+            if (cachedMaps.ContainsKey(newMapCache.GetMap))
+			{
+				cachedMaps[newMapCache.GetMap] = newMapCache;
+				return;
+            }
+
+			cachedMaps.Add(newMapCache.GetMap, newMapCache);
+        }
+
+        private static bool ParseUserVariables(ref string str, int recursion_level = 0) 
+        {
 			if (recursion_level >= 5)
 				throw new InfiniteRecursionException();
 			Match match = variableNames.Match(str, 0);
@@ -277,15 +337,19 @@ namespace CrunchyDuck.Math {
 			return true;
 		}
 
-		public static void AddParameters(Expression e, BillComponent bc, List<string> parameter_list) {
-			CachedMapData cache = bc.Cache;
-			if (cache == null) {
+		private static void AddParameters(Expression e, BillComponent bc, List<string> parameter_list) 
+		{
+			var cache = bc.Cache;
+			if (cache == null) 
+			{
 				BillManager.instance.RemoveBillComponent(bc);
 				return;
 			}
 
-			foreach (string parameter in parameter_list) {
-				if (cache.SearchVariable(parameter, bc, out float count)) {
+			foreach (var parameter in parameter_list) 
+			{
+				if (cache.SearchVariable(parameter, bc, out var count)) 
+				{
 					e.Parameters[parameter] = count;
 				}
 			}
