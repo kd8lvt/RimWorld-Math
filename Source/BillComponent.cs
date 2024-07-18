@@ -3,6 +3,7 @@ using Verse;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace CrunchyDuck.Math {
 	// I'd like to make this IExposible, but it would break peoples' saves.
@@ -16,6 +17,7 @@ namespace CrunchyDuck.Math {
 			}
 		}
 		public string name;
+		protected bool hasBeenSaved = false;
 
 		// I have to maintain my own buffers so I can modify them at will, e.g. when a + or - button is pressed.
 		public InputField itemsToCount;
@@ -25,7 +27,6 @@ namespace CrunchyDuck.Math {
 		public bool customItemsToCount = false;
 		public bool isDoXTimes { get { return targetBill.repeatMode == BillRepeatModeDefOf.RepeatCount; } }
 		public bool isDoUntilX { get { return targetBill.repeatMode == BillRepeatModeDefOf.TargetCount; } }
-
 		public BillComponent(Bill_Production bill) {
 			targetBill = bill;
 			name = bill.Label.CapitalizeFirst();
@@ -62,7 +63,10 @@ namespace CrunchyDuck.Math {
 				}
 			}
 
+			if (MathSettings.settings.defaultDropOnFloor && !this.hasBeenSaved) bill.storeMode = BillStoreModeDefOf.DropOnFloor;
+
 			linkTracker = new BillLinkTracker(this);
+			this.hasBeenSaved = true;
 		}
 
 		public void ExposeData() {
@@ -87,8 +91,9 @@ namespace CrunchyDuck.Math {
 			Scribe_Values.Look(ref targetBill.targetCount, "target_count_last_result");
 			Scribe_Values.Look(ref targetBill.repeatCount, "doXTimesLastResult");
 			Scribe_Values.Look(ref targetBill.unpauseWhenYouHave, "unpauseLastResult");
-		}
-	}
+			Scribe_Values.Look(ref this.hasBeenSaved, "hasBeenSaved",true); //Flag that just prevents loading from resetting stockpile settings to the default.
+        }
+    }
 
 	public class InputField {
 		private Bill_Production bill;

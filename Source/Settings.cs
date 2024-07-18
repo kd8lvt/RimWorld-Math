@@ -5,6 +5,7 @@ namespace CrunchyDuck.Math {
 	public class Settings : ModSettings {
         public float textInputAreaBonus = 200f;
 		public bool extlogging = false;
+		public bool defaultDropOnFloor = false;
 
 		public string lastVersionInfocardChecked = "";
 		public Dictionary<string, UserVariable> userVariablesDict = new Dictionary<string, UserVariable>();
@@ -14,6 +15,7 @@ namespace CrunchyDuck.Math {
             base.ExposeData();
             Scribe_Values.Look(ref textInputAreaBonus, "CDtextInputAreaBonus", 200f);
             Scribe_Values.Look(ref extlogging, "CDMathExtLogging", false);
+			Scribe_Values.Look(ref defaultDropOnFloor, "CDMathDefaultDropOnFloor", false);
 
 			Scribe_Values.Look(ref lastVersionInfocardChecked, "CDlastVersionInfocardChecked", "");
 			Scribe_Collections.Look(ref userVariables, "userVariables", LookMode.Deep);
@@ -73,6 +75,7 @@ namespace CrunchyDuck.Math {
 			listingStandard.Begin(inRect);
 			listingStandard.Label("Bill input area expansion: " + settings.textInputAreaBonus.ToString(), tooltip: "How much the text field for bill input is expanded. A larger field makes it easier to have larger equations.");
 			settings.textInputAreaBonus = listingStandard.Slider(settings.textInputAreaBonus, 0f, 600f);
+			listingStandard.CheckboxLabeled("Default Drop On Floor: ", ref settings.defaultDropOnFloor, tooltip: "Makes bills drop their items on the floor by default, instead of the vanilla behavior of hauling to a stockpile. Doesn't prevent you from changing it ingame.");
 			listingStandard.CheckboxLabeled("Extended Logging: ", ref settings.extlogging, tooltip: "Unless you were asked to enable this, you probably don't want it.");
 			listingStandard.End();
 			base.DoSettingsWindowContents(inRect);

@@ -1,25 +1,23 @@
 ﻿using CrunchyDuck.Math.MathFilters;
 using CrunchyDuck.Math.ModCompat;
+using LazyCache;
 using RimWorld;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Verse;
 using ThingFilter = CrunchyDuck.Math.MathFilters.ThingFilter;
 
 namespace CrunchyDuck.Math {
-	// TODO: Add in checking against pawn skills, like "get all pawns with shooting > 3"
 	public class CachedMapData {
 		private Map map;
-		private static Regex v13_getIntake = new Regex(@"Final value: (\d+(?:.\d+)?)", RegexOptions.Compiled);
 
 		public Dictionary<string, Pawn> pawns_dict = new Dictionary<string, Pawn>();
 		public List<Thing> humanPawns = new List<Thing>();
 		public List<Thing> ownedAnimals = new List<Thing>();
 		public Dictionary<string, List<Thing>> resources = new Dictionary<string, List<Thing>>();
+		private IAppCache appCache = new CachingService();
 
 		public CachedMapData(Map map) {
 			this.map = map;
-
 			foreach (Pawn p in map.mapPawns.AllPawns) {
 				bool in_faction = p.Faction == Faction.OfPlayer;
 				bool animal = p.AnimalOrWildMan();
@@ -40,7 +38,19 @@ namespace CrunchyDuck.Math {
 			}
 		}
 
-		public bool SearchVariable(string input, BillComponent bc, out float count) {
+		public bool SearchVariable(string input,BillComponent bc,out float count)
+        {
+			bool ret = false;
+			count = appCache.GetOrAdd(bc.targetBill.GetUniqueLoadID(), () =>
+			{
+				float res = 0f;
+				ret = SyncSearchVariable(input, bc, out res);
+				return res;
+			},System.DateTimeOffset.Now.AddSeconds(5)); //Recalc this every ~5 seconds
+			return ret;
+        }
+
+		public bool SyncSearchVariable(string input, BillComponent bc, out float count) {
 			count = 0;
 			string[] commands = input.Split('.');
 			MathFilter filter = null;

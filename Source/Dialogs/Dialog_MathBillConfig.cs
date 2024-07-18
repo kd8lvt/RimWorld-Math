@@ -336,7 +336,7 @@ namespace CrunchyDuck.Math {
 				{
 					maxSkill = EndlessGrowthSupport.GetMaxLevelForBill();
 				}
-				Widgets.IntRange(listing.GetRect(30), 0, ref bill.allowedSkillRange, 0, maxSkill);
+				Widgets.IntRange(listing.GetRect(30f), 975643280, ref bill.allowedSkillRange, 0, maxSkill);
 			}
 			listing_standard.EndSection(listing);
 		}
