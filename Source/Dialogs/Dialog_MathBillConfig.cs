@@ -161,23 +161,23 @@ namespace CrunchyDuck.Math {
 		}
 
 		private void RenderBillSettings(Listing_Standard listing_standard) {
-			Listing_Standard listing = listing_standard.BeginSection(RepeatModeSubdialogHeight);
-			if (listing.ButtonText(bill.repeatMode.LabelCap))
+            Listing_Standard listing = listing_standard.BeginSection(RepeatModeSubdialogHeight);
+            if (listing.ButtonText(bill.repeatMode.LabelCap))
 				BillRepeatModeUtility.MakeConfigFloatMenu(bill);
 			listing.Gap();
 
-			// Repeat count
-			if (bill.repeatMode == BillRepeatModeDefOf.RepeatCount) {
-				listing.Label("RepeatCount".Translate(bill.repeatCount) + " " + bc.doXTimes.CurrentValue);
+            // Repeat count
+            if (bill.repeatMode == BillRepeatModeDefOf.RepeatCount) {
+                listing.Label("RepeatCount".Translate(bill.repeatCount) + " " + bc.doXTimes.CurrentValue);
 				MathBillEntry(bc.doXTimes, listing);
 			}
 
 			// Target count
 			else if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
-				// Currently have label
-				string currently_have = "CurrentlyHave".Translate() + ": " + bill.recipe.WorkerCounter.CountProducts(bill) + " / ";
+                // Currently have label
+                string currently_have = "CurrentlyHave".Translate() + ": " + bill.recipe.WorkerCounter.CountProducts(bill) + " / ";
 				string out_of;
-				if (bill.targetCount >= 999999) {
+                if (bill.targetCount >= 999999) {
 					TaggedString taggedString1;
 					taggedString1 = "Infinite".Translate();
 					taggedString1 = taggedString1.ToLower();
@@ -189,64 +189,73 @@ namespace CrunchyDuck.Math {
 				//string str3 = bill.recipe.WorkerCounter.ProductsDescription(bill);
 				//if (!str3.NullOrEmpty())
 				//	label = label + ("\n" + "CountingProducts".Translate() + ": " + str3.CapitalizeFirst());
-				listing.Label(label);
+                listing.Label(label);
 
-				// Counted items checkbox/field
-				Listing_Standard item_count_listing = new Listing_Standard();
+                // Counted items checkbox/field
+                Listing_Standard item_count_listing = new Listing_Standard();
 				item_count_listing.Begin(listing.GetRect(24f));
 				item_count_listing.ColumnWidth = item_count_listing.ColumnWidth / 2 - 10;
-				item_count_listing.CheckboxLabeled("Custom item count", ref bc.customItemsToCount);
+                item_count_listing.CheckboxLabeled("Custom item count", ref bc.customItemsToCount);
 				item_count_listing.NewColumn();
 				if (bc.customItemsToCount) {
-					Rect rect = item_count_listing.GetRect(24f);
-					MathTextField(bc.itemsToCount, rect);
+	                Rect rect = item_count_listing.GetRect(24f);
+                    MathTextField(bc.itemsToCount, rect);
 				}
 				item_count_listing.End();
-
+                
 				listing.Label("Target value: " + bc.doUntilX.CurrentValue);
-				MathBillEntry(bc.doUntilX, listing, bill.recipe.targetCountAdjustment);
+                MathBillEntry(bc.doUntilX, listing, bill.recipe.targetCountAdjustment);
 
-				ThingDef producedThingDef = bill.recipe.ProducedThingDef;
+                ThingDef producedThingDef = bill.recipe.ProducedThingDef;
 				if (producedThingDef != null) {
-					Listing_Standard equipped_tainted_listing = new Listing_Standard();
+	                Listing_Standard equipped_tainted_listing = new Listing_Standard();
 					equipped_tainted_listing.Begin(listing.GetRect(24f));
 					equipped_tainted_listing.ColumnWidth = equipped_tainted_listing.ColumnWidth / 2 - 10;
 					// Equipped check-box
 					//if (producedThingDef.IsWeapon || producedThingDef.IsApparel) //Not much of a reason to check for this, it just causes confusion when compared to BWM.
-						equipped_tainted_listing.CheckboxLabeled("CD.M.IncludeInventory".Translate(), ref bill.includeEquipped);
+		                equipped_tainted_listing.CheckboxLabeled("CD.M.IncludeInventory".Translate(), ref bill.includeEquipped);
 
 					// Tainted check-box
 					equipped_tainted_listing.NewColumn();
-					if (producedThingDef.IsApparel && producedThingDef.apparel.careIfWornByCorpse)
+	                if (producedThingDef.IsApparel && producedThingDef.apparel.careIfWornByCorpse)
 						equipped_tainted_listing.CheckboxLabeled("IncludeTainted".Translate(), ref bill.includeTainted);
 					equipped_tainted_listing.End();
 
 					// Drop down menu for where to search.
-					var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Zone_Stockpile>>>)(b => GenerateStockpileInclusion());
-					string button_label = bill.includeGroup == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeGroup.StorageGroup.label);
-					Widgets.Dropdown(listing.GetRect(30f), bill, b => (Zone_Stockpile)b.GetSlotGroup(), f, button_label);
+	                var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Zone_Stockpile>>>)(b => GenerateStockpileInclusion());
+					//I know this is messier. It's easier for me to read.
+					string button_label = "";
+					if (bill.includeGroup == null)
+					{
+						button_label += "IncludeFromAll".Translate();
+                    } else
+					{
+                        button_label += "IncludeSpecific".Translate(bill.includeGroup.Settings.SlotGroupParentOwner.SlotYielderLabel());
+                    }
+                    //string button_label = (bill.includeGroup == null || bill.includeGroup.StorageGroup == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeGroup.StorageGroup.label));
+	                Widgets.Dropdown(listing.GetRect(30f), bill, b => (Zone_Stockpile)b.GetSlotGroup(), f, button_label);
 
 					// Hitpoints slider.
-					if (bill.recipe.products.Any<ThingDefCountClass>(prod => prod.thingDef.useHitPoints)) {
+	                if (bill.recipe.products.Any<ThingDefCountClass>(prod => prod.thingDef.useHitPoints)) {
 						Widgets.FloatRange(listing.GetRect(28f), 975643279, ref bill.hpRange, labelKey: "HitPoints", valueStyle: ToStringStyle.PercentZero);
 						bill.hpRange.min = Mathf.Round(bill.hpRange.min * 100f) / 100f;
 						bill.hpRange.max = Mathf.Round(bill.hpRange.max * 100f) / 100f;
 					}
 					// Quality slider.
-					if (producedThingDef.HasComp(typeof(CompQuality)))
+	                if (producedThingDef.HasComp(typeof(CompQuality)))
 						Widgets.QualityRange(listing.GetRect(28f), 1098906561, ref bill.qualityRange);
 
 					// Limit material
-					if (producedThingDef.MadeFromStuff)
-						listing.CheckboxLabeled("LimitToAllowedStuff".Translate(), ref bill.limitToAllowedStuff);
+	                if (producedThingDef.MadeFromStuff)
+                        listing.CheckboxLabeled("LimitToAllowedStuff".Translate(), ref bill.limitToAllowedStuff);
 				}
 			}
 
 			// Pause when satisfied
 			if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
-				listing.CheckboxLabeled("PauseWhenSatisfied".Translate(), ref bill.pauseWhenSatisfied);
+                listing.CheckboxLabeled("PauseWhenSatisfied".Translate(), ref bill.pauseWhenSatisfied);
 				if (bill.pauseWhenSatisfied) {
-					listing.Label("UnpauseWhenYouHave".Translate() + ": " + bc.unpause.CurrentValue.ToString("F0"));
+	                listing.Label("UnpauseWhenYouHave".Translate() + ": " + bc.unpause.CurrentValue.ToString("F0"));
 					MathBillEntry(bc.unpause, listing, bill.recipe.targetCountAdjustment);
 					//listing.IntEntry(ref bill.unpauseWhenYouHave, ref bc.unpause.buffer, bill.recipe.targetCountAdjustment);
 					//if (bill.unpauseWhenYouHave >= bill.targetCount) {
@@ -257,7 +266,7 @@ namespace CrunchyDuck.Math {
 			}
 
 			listing_standard.EndSection(listing);
-			listing_standard.Gap();
+            listing_standard.Gap();
 		}
 
 		private void RenderStockpileSettings(Listing_Standard listing_standard) {
@@ -336,7 +345,7 @@ namespace CrunchyDuck.Math {
 				{
 					maxSkill = EndlessGrowthSupport.GetMaxLevelForBill();
 				}
-				Widgets.IntRange(listing.GetRect(30), 0, ref bill.allowedSkillRange, 0, maxSkill);
+				Widgets.IntRange(listing.GetRect(30),1,ref bill.allowedSkillRange, 0, maxSkill);
 			}
 			listing_standard.EndSection(listing);
 		}
@@ -722,7 +731,7 @@ namespace CrunchyDuck.Math {
 			List<SlotGroup> groupList = bill.billStack.billGiver.Map.haulDestinationManager.AllGroupsListInPriorityOrder;
 			int groupCount = groupList.Count;
 			int i = 0;
-			while (i < groupCount) {
+			while (i < groupCount && groupList[i] != null) {
 				SlotGroup slotGroup = groupList[i];
 				if (slotGroup.parent is Zone_Stockpile stockpile) {
 					if (!bill.recipe.WorkerCounter.CanPossiblyStore(bill, stockpile.slotGroup)) {

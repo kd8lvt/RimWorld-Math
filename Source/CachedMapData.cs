@@ -140,7 +140,7 @@ namespace CrunchyDuck.Math {
 				// Check if in stockpile.
 				// TODO: Make default only check stockpiles, with an option to make it check everywhere.
 				var zone = bc.targetBill.includeGroup;
-				if (zone != null && !zone.CellsList.Contains(thing.InteractionCell)) {
+				if (thing.InteractionCell != null && zone != null && !zone.CellsList.Contains(thing.InteractionCell)) {
 					continue;
 				}
 
