@@ -708,11 +708,7 @@ namespace CrunchyDuck.Math {
 				try
 				{
 					foreach (TreeNode_Link node in linkSettingsMaster.children) {
-						try
-						{
-							node.Render(lt, 0);
-						}
-						catch { }
+						node?.Render(lt, 0);
 					}
 					linkSettingsHeight = lt.CurHeight + 10;
 				}
