@@ -71,10 +71,16 @@ namespace CrunchyDuck.Math {
 		public override void DoSettingsWindowContents(UnityEngine.Rect inRect) {
 			Listing_Standard listingStandard = new Listing_Standard();
 			listingStandard.Begin(inRect);
-			listingStandard.Label("Bill input area expansion: " + settings.textInputAreaBonus.ToString(), tooltip: "How much the text field for bill input is expanded. A larger field makes it easier to have larger equations.");
-			settings.textInputAreaBonus = listingStandard.Slider(settings.textInputAreaBonus, 0f, 600f);
-			listingStandard.CheckboxLabeled("Extended Logging: ", ref settings.extlogging, tooltip: "Unless you were asked to enable this, you probably don't want it.");
-			listingStandard.End();
+			try
+			{
+				listingStandard.Label("Bill input area expansion: " + settings.textInputAreaBonus.ToString(), tooltip: "How much the text field for bill input is expanded. A larger field makes it easier to have larger equations.");
+				settings.textInputAreaBonus = listingStandard.Slider(settings.textInputAreaBonus, 0f, 600f);
+				listingStandard.CheckboxLabeled("Extended Logging: ", ref settings.extlogging, tooltip: "Unless you were asked to enable this, you probably don't want it.");
+			}
+			finally
+			{
+				listingStandard.End();
+			}
 			base.DoSettingsWindowContents(inRect);
 		}
 

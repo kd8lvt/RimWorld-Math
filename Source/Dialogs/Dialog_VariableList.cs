@@ -65,76 +65,85 @@ namespace CrunchyDuck.Math {
 			// Draw scroll area.
 			Rect scroll_area = new Rect(0.0f, 0.0f, inRect.width - 16f, scroll_area_total_height);
 			Widgets.BeginScrollView(scroll_area_display, ref scrollPosition, scroll_area);
-			if (Event.current.type == EventType.Repaint)
-				reorderableGroup = ReorderableWidget.NewGroup((from, to) => ReorderVariable(uvs, from, to), ReorderableDirection.Vertical, scroll_area_display);
+			try
+			{
+				if (Event.current.type == EventType.Repaint)
+					reorderableGroup = ReorderableWidget.NewGroup((from, to) => ReorderVariable(uvs, from, to), ReorderableDirection.Vertical, scroll_area_display);
 
-			for (int i = 0; i < uvs.Count; i++) {
-				float y = row_size.y * i;
-				var uv = uvs[i];
-				Rect row_rect = new Rect(0.0f, y, row_size.x, row_size.y);
+				for (int i = 0; i < uvs.Count; i++) {
+					float y = row_size.y * i;
+					var uv = uvs[i];
+					Rect row_rect = new Rect(0.0f, y, row_size.x, row_size.y);
 
-				// Register this row as a reorderable segment.
-				ReorderableWidget.Reorderable(reorderableGroup, row_rect);
+					// Register this row as a reorderable segment.
+					ReorderableWidget.Reorderable(reorderableGroup, row_rect);
 
-				// Draw alternating backgrounds to help visually distinguish rows.
-				if (i % 2 == 0)
-					Widgets.DrawAltRect(row_rect);
+					// Draw alternating backgrounds to help visually distinguish rows.
+					if (i % 2 == 0)
+						Widgets.DrawAltRect(row_rect);
 
-				Widgets.BeginGroup(row_rect);
+					Widgets.BeginGroup(row_rect);
+					try
+					{
+						Rect fields_rect = new Rect(0, 0, row_rect.width, row_rect.height);
+						fields_rect = fields_rect.ContractedBy(HorizontalPadding, 2);
+						// Delete button
+						Rect delete_button_rect = fields_rect.ChopRectRight(DeleteButSize, 0);
+						if (Widgets.ButtonImage(delete_button_rect, TexButton.Delete, Color.white, GenUI.SubtleMouseoverColor)) {
+							uvs.RemoveAt(i);
+							i--;
+							continue;
+						}
 
-				Rect fields_rect = new Rect(0, 0, row_rect.width, row_rect.height);
-				fields_rect = fields_rect.ContractedBy(HorizontalPadding, 2);
-				// Delete button
-				Rect delete_button_rect = fields_rect.ChopRectRight(DeleteButSize, 0);
-				if (Widgets.ButtonImage(delete_button_rect, TexButton.Delete, Color.white, GenUI.SubtleMouseoverColor)) {
-					uvs.RemoveAt(i);
-					i--;
-					continue;
+						// Drag symbol
+						Rect drag_rect = fields_rect.ChopRectLeft(GUIExtensions.SmallElementSize + HorizontalPadding);
+						drag_rect = new Rect(drag_rect.x, 3, GUIExtensions.SmallElementSize, GUIExtensions.SmallElementSize);
+						TooltipHandler.TipRegion(drag_rect, "DragToReorder".Translate());
+						GUI.DrawTexture(drag_rect, Resources.DragHash);
+
+						Color original_col = GUI.color;
+
+						// Variable name
+						Rect variable_name_rect = fields_rect.ChopRectLeft(0.3f);
+						variable_name_rect.ContractedBy(HorizontalPadding, 0);
+						// These are separate if checks so that the item is still pushed into the dictionary if the name is invalid.
+						// This makes sure that behaviour is consistent.
+						if (!uv.name.IsParameter())
+							GUI.color = new Color(1, 0, 0, 0.8f);
+						if (uvs_dict.ContainsKey(uv.name))
+							GUI.color = new Color(1, 0, 0, 0.8f);
+						else
+							uvs_dict[uv.name] = uv;
+						uv.name = Widgets.TextField(variable_name_rect, uv.name);
+						GUI.color = original_col;
+
+						// Equals sign.
+						var ta = Text.Anchor;
+						Text.Font = GameFont.Medium;
+						Text.Anchor = TextAnchor.MiddleCenter;
+						Widgets.Label(fields_rect.ChopRectLeft(DeleteButSize), "=");
+						Text.Font = GameFont.Small;
+						Text.Anchor = ta;
+
+						// Equation
+						// Check if the provided equation is valid.
+						float math_result = 0;
+						if (!Math.DoMath(uv.equation, bc, ref math_result))
+							GUI.color = new Color(1, 0, 0, 0.8f);
+						var variable_equation_rect = fields_rect;
+						uv.equation = Widgets.TextField(variable_equation_rect, uv.equation);
+						GUI.color = original_col;
+					}
+					finally
+					{
+						Widgets.EndGroup();
+					}
 				}
-
-				// Drag symbol
-				Rect drag_rect = fields_rect.ChopRectLeft(GUIExtensions.SmallElementSize + HorizontalPadding);
-				drag_rect = new Rect(drag_rect.x, 3, GUIExtensions.SmallElementSize, GUIExtensions.SmallElementSize);
-				TooltipHandler.TipRegion(drag_rect, "DragToReorder".Translate());
-				GUI.DrawTexture(drag_rect, Resources.DragHash);
-
-				Color original_col = GUI.color;
-
-				// Variable name
-				Rect variable_name_rect = fields_rect.ChopRectLeft(0.3f);
-				variable_name_rect.ContractedBy(HorizontalPadding, 0);
-				// These are separate if checks so that the item is still pushed into the dictionary if the name is invalid.
-				// This makes sure that behaviour is consistent.
-				if(!uv.name.IsParameter())
-					GUI.color = new Color(1, 0, 0, 0.8f);
-				if (uvs_dict.ContainsKey(uv.name))
-					GUI.color = new Color(1, 0, 0, 0.8f);
-				else
-					uvs_dict[uv.name] = uv;
-				uv.name = Widgets.TextField(variable_name_rect, uv.name);
-				GUI.color = original_col;
-
-				// Equals sign.
-				var ta = Text.Anchor;
-				Text.Font = GameFont.Medium;
-				Text.Anchor = TextAnchor.MiddleCenter;
-				Widgets.Label(fields_rect.ChopRectLeft(DeleteButSize), "=");
-				Text.Font = GameFont.Small;
-				Text.Anchor = ta;
-
-				// Equation
-				// Check if the provided equation is valid.
-				float math_result = 0;
-				if (!Math.DoMath(uv.equation, bc, ref math_result))
-					GUI.color = new Color(1, 0, 0, 0.8f);
-				var variable_equation_rect = fields_rect;
-				uv.equation = Widgets.TextField(variable_equation_rect, uv.equation);
-				GUI.color = original_col;
-
-				Widgets.EndGroup();
 			}
-
-			Widgets.EndScrollView();
+			finally
+			{
+				Widgets.EndScrollView();
+			}
 			MathSettings.settings.userVariablesDict = uvs_dict;
 		}
 	}
