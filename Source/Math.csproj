@@ -71,6 +71,7 @@
     <Compile Include="CachedMapData.cs" />
     <Compile Include="Dialogs\Dialog_Updates.cs" />
     <Compile Include="Dialogs\Dialog_VariableList.cs" />
+    <Compile Include="ExceptionIdentifier.cs" />
     <Compile Include="GUIExtensions.cs" />
     <Compile Include="MathFilters\CategoryFilter.cs" />
     <Compile Include="MathFilters\CompositableLoadoutTagsFilter.cs" />

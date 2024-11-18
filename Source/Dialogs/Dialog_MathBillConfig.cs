@@ -153,192 +153,252 @@ namespace CrunchyDuck.Math {
 			Listing_Standard listing_standard = new Listing_Standard();
 			listing_standard.Begin(rect);
 
-			RenderBillSettings(listing_standard);
-			RenderStockpileSettings(listing_standard);
-			RenderWorkerSettings(listing_standard);
-
-			listing_standard.End();
+			try
+			{
+				RenderBillSettings(listing_standard);
+				RenderStockpileSettings(listing_standard);
+				RenderWorkerSettings(listing_standard);
+			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				listing_standard.End();
+			}
 		}
 
 		private void RenderBillSettings(Listing_Standard listing_standard) {
 			Listing_Standard listing = listing_standard.BeginSection(RepeatModeSubdialogHeight);
-			if (listing.ButtonText(bill.repeatMode.LabelCap))
-				BillRepeatModeUtility.MakeConfigFloatMenu(bill);
-			listing.Gap();
 
-			// Repeat count
-			if (bill.repeatMode == BillRepeatModeDefOf.RepeatCount) {
-				listing.Label("RepeatCount".Translate(bill.repeatCount) + " " + bc.doXTimes.CurrentValue);
-				MathBillEntry(bc.doXTimes, listing);
-			}
+			try
+			{
+				if (listing.ButtonText(bill.repeatMode.LabelCap))
+					BillRepeatModeUtility.MakeConfigFloatMenu(bill);
+				listing.Gap();
 
-			// Target count
-			else if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
-				// Currently have label
-				string currently_have = "CurrentlyHave".Translate() + ": " + bill.recipe.WorkerCounter.CountProducts(bill) + " / ";
-				string out_of;
-				if (bill.targetCount >= 999999) {
-					TaggedString taggedString1;
-					taggedString1 = "Infinite".Translate();
-					taggedString1 = taggedString1.ToLower();
-					out_of = taggedString1.ToString();
+				// Repeat count
+				if (bill.repeatMode == BillRepeatModeDefOf.RepeatCount) {
+					listing.Label("RepeatCount".Translate(bill.repeatCount) + " " + bc.doXTimes.CurrentValue);
+					MathBillEntry(bc.doXTimes, listing);
 				}
-				else
-					out_of = bill.targetCount.ToString();
-				string label = currently_have + out_of;
-				//string str3 = bill.recipe.WorkerCounter.ProductsDescription(bill);
-				//if (!str3.NullOrEmpty())
-				//	label = label + ("\n" + "CountingProducts".Translate() + ": " + str3.CapitalizeFirst());
-				listing.Label(label);
 
-				// Counted items checkbox/field
-				Listing_Standard item_count_listing = new Listing_Standard();
-				item_count_listing.Begin(listing.GetRect(24f));
-				item_count_listing.ColumnWidth = item_count_listing.ColumnWidth / 2 - 10;
-				item_count_listing.CheckboxLabeled("Custom item count", ref bc.customItemsToCount);
-				item_count_listing.NewColumn();
-				if (bc.customItemsToCount) {
-					Rect rect = item_count_listing.GetRect(24f);
-					MathTextField(bc.itemsToCount, rect);
-				}
-				item_count_listing.End();
-
-				listing.Label("Target value: " + bc.doUntilX.CurrentValue);
-				MathBillEntry(bc.doUntilX, listing, bill.recipe.targetCountAdjustment);
-
-				ThingDef producedThingDef = bill.recipe.ProducedThingDef;
-				if (producedThingDef != null) {
-					Listing_Standard equipped_tainted_listing = new Listing_Standard();
-					equipped_tainted_listing.Begin(listing.GetRect(24f));
-					equipped_tainted_listing.ColumnWidth = equipped_tainted_listing.ColumnWidth / 2 - 10;
-					// Equipped check-box
-					//if (producedThingDef.IsWeapon || producedThingDef.IsApparel) //Not much of a reason to check for this, it just causes confusion when compared to BWM.
-						equipped_tainted_listing.CheckboxLabeled("CD.M.IncludeInventory".Translate(), ref bill.includeEquipped);
-
-					// Tainted check-box
-					equipped_tainted_listing.NewColumn();
-					if (producedThingDef.IsApparel && producedThingDef.apparel.careIfWornByCorpse)
-						equipped_tainted_listing.CheckboxLabeled("IncludeTainted".Translate(), ref bill.includeTainted);
-					equipped_tainted_listing.End();
-
-					// Drop down menu for where to search.
-					var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Zone_Stockpile>>>)(b => GenerateStockpileInclusion());
-					string button_label = bill.includeGroup == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeGroup.StorageGroup.label);
-					Widgets.Dropdown(listing.GetRect(30f), bill, b => (Zone_Stockpile)b.GetSlotGroup(), f, button_label);
-
-					// Hitpoints slider.
-					if (bill.recipe.products.Any<ThingDefCountClass>(prod => prod.thingDef.useHitPoints)) {
-						Widgets.FloatRange(listing.GetRect(28f), 975643279, ref bill.hpRange, labelKey: "HitPoints", valueStyle: ToStringStyle.PercentZero);
-						bill.hpRange.min = Mathf.Round(bill.hpRange.min * 100f) / 100f;
-						bill.hpRange.max = Mathf.Round(bill.hpRange.max * 100f) / 100f;
+				// Target count
+				else if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
+					// Currently have label
+					string currently_have = "CurrentlyHave".Translate() + ": " + bill.recipe.WorkerCounter.CountProducts(bill) + " / ";
+					string out_of;
+					if (bill.targetCount >= 999999) {
+						TaggedString taggedString1;
+						taggedString1 = "Infinite".Translate();
+						taggedString1 = taggedString1.ToLower();
+						out_of = taggedString1.ToString();
 					}
-					// Quality slider.
-					if (producedThingDef.HasComp(typeof(CompQuality)))
-						Widgets.QualityRange(listing.GetRect(28f), 1098906561, ref bill.qualityRange);
+					else
+						out_of = bill.targetCount.ToString();
+					string label = currently_have + out_of;
+					//string str3 = bill.recipe.WorkerCounter.ProductsDescription(bill);
+					//if (!str3.NullOrEmpty())
+					//	label = label + ("\n" + "CountingProducts".Translate() + ": " + str3.CapitalizeFirst());
+					listing.Label(label);
 
-					// Limit material
-					if (producedThingDef.MadeFromStuff)
-						listing.CheckboxLabeled("LimitToAllowedStuff".Translate(), ref bill.limitToAllowedStuff);
+					// Counted items checkbox/field
+					Listing_Standard item_count_listing = new Listing_Standard();
+					item_count_listing.Begin(listing.GetRect(24f));
+					try
+					{
+						item_count_listing.ColumnWidth = item_count_listing.ColumnWidth / 2 - 10;
+						item_count_listing.CheckboxLabeled("Custom item count", ref bc.customItemsToCount);
+						item_count_listing.NewColumn();
+						if (bc.customItemsToCount) {
+							Rect rect = item_count_listing.GetRect(24f);
+							MathTextField(bc.itemsToCount, rect);
+						}
+					}
+					catch (Exception e)
+					{
+						Math.TryLogException(e, $"Encountered an error while rendering target count settings for bill \"{bill.Label}\"");
+					}
+					finally
+					{
+						item_count_listing.End();
+					}
+
+					listing.Label("Target value: " + bc.doUntilX.CurrentValue);
+					MathBillEntry(bc.doUntilX, listing, bill.recipe.targetCountAdjustment);
+
+					ThingDef producedThingDef = bill.recipe.ProducedThingDef;
+					if (producedThingDef != null) {
+						Listing_Standard equipped_tainted_listing = new Listing_Standard();
+						equipped_tainted_listing.Begin(listing.GetRect(24f));
+						try
+						{
+							equipped_tainted_listing.ColumnWidth = equipped_tainted_listing.ColumnWidth / 2 - 10;
+							// Equipped check-box
+							//if (producedThingDef.IsWeapon || producedThingDef.IsApparel) //Not much of a reason to check for this, it just causes confusion when compared to BWM.
+							equipped_tainted_listing.CheckboxLabeled("CD.M.IncludeInventory".Translate(), ref bill.includeEquipped);
+
+							// Tainted check-box
+							equipped_tainted_listing.NewColumn();
+							if (producedThingDef.IsApparel && producedThingDef.apparel.careIfWornByCorpse)
+								equipped_tainted_listing.CheckboxLabeled("IncludeTainted".Translate(), ref bill.includeTainted);
+						}
+						catch (Exception e)
+						{
+							Math.TryLogException(e, $"Encountered an error while rendering include settings for bill \"{bill.Label}\"");
+						}
+						finally
+						{
+							equipped_tainted_listing.End();
+						}
+
+						// Drop down menu for where to search.
+						var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Zone_Stockpile>>>)(b => GenerateStockpileInclusion());
+						string button_label = bill.includeGroup == null ? "IncludeFromAll".Translate() : "IncludeSpecific".Translate(bill.includeGroup.StorageGroup.label);
+						Widgets.Dropdown(listing.GetRect(30f), bill, b => (Zone_Stockpile)b.GetSlotGroup(), f, button_label);
+
+						// Hitpoints slider.
+						if (bill.recipe.products.Any<ThingDefCountClass>(prod => prod.thingDef.useHitPoints)) {
+							Widgets.FloatRange(listing.GetRect(28f), 975643279, ref bill.hpRange, labelKey: "HitPoints", valueStyle: ToStringStyle.PercentZero);
+							bill.hpRange.min = Mathf.Round(bill.hpRange.min * 100f) / 100f;
+							bill.hpRange.max = Mathf.Round(bill.hpRange.max * 100f) / 100f;
+						}
+						// Quality slider.
+						if (producedThingDef.HasComp(typeof(CompQuality)))
+							Widgets.QualityRange(listing.GetRect(28f), 1098906561, ref bill.qualityRange);
+
+						// Limit material
+						if (producedThingDef.MadeFromStuff)
+							listing.CheckboxLabeled("LimitToAllowedStuff".Translate(), ref bill.limitToAllowedStuff);
+					}
+				}
+
+				// Pause when satisfied
+				if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
+					listing.CheckboxLabeled("PauseWhenSatisfied".Translate(), ref bill.pauseWhenSatisfied);
+					if (bill.pauseWhenSatisfied) {
+						listing.Label("UnpauseWhenYouHave".Translate() + ": " + bc.unpause.CurrentValue.ToString("F0"));
+						MathBillEntry(bc.unpause, listing, bill.recipe.targetCountAdjustment);
+						//listing.IntEntry(ref bill.unpauseWhenYouHave, ref bc.unpause.buffer, bill.recipe.targetCountAdjustment);
+						//if (bill.unpauseWhenYouHave >= bill.targetCount) {
+						//	bill.unpauseWhenYouHave = bill.targetCount - 1;
+						//	this.unpauseCountEditBuffer = bill.unpauseWhenYouHave.ToStringCached();
+						//}
+					}
 				}
 			}
-
-			// Pause when satisfied
-			if (bill.repeatMode == BillRepeatModeDefOf.TargetCount) {
-				listing.CheckboxLabeled("PauseWhenSatisfied".Translate(), ref bill.pauseWhenSatisfied);
-				if (bill.pauseWhenSatisfied) {
-					listing.Label("UnpauseWhenYouHave".Translate() + ": " + bc.unpause.CurrentValue.ToString("F0"));
-					MathBillEntry(bc.unpause, listing, bill.recipe.targetCountAdjustment);
-					//listing.IntEntry(ref bill.unpauseWhenYouHave, ref bc.unpause.buffer, bill.recipe.targetCountAdjustment);
-					//if (bill.unpauseWhenYouHave >= bill.targetCount) {
-					//	bill.unpauseWhenYouHave = bill.targetCount - 1;
-					//	this.unpauseCountEditBuffer = bill.unpauseWhenYouHave.ToStringCached();
-					//}
-				}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering settings for bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				listing_standard.EndSection(listing);
 			}
 
-			listing_standard.EndSection(listing);
 			listing_standard.Gap();
 		}
 
 		private void RenderStockpileSettings(Listing_Standard listing_standard) {
 			// Take to stockpile
 			Listing_Standard listing2 = listing_standard.BeginSection(StoreModeSubdialogHeight);
-			string label1 = string.Format(bill.GetStoreMode().LabelCap, bill.GetSlotGroup() != null ? bill.GetSlotGroup().StorageGroup.label : "");
-			if (bill.GetSlotGroup() != null && !bill.recipe.WorkerCounter.CanPossiblyStore(bill, bill.GetSlotGroup())) {
-				label1 += string.Format(" ({0})", "IncompatibleLower".Translate());
-				Text.Font = GameFont.Tiny;
-			}
-			if (listing2.ButtonText(label1)) {
-				Text.Font = GameFont.Small;
-				List<FloatMenuOption> options = new List<FloatMenuOption>();
-				foreach (BillStoreModeDef billStoreModeDef in DefDatabase<BillStoreModeDef>.AllDefs.OrderBy(bsm => bsm.listOrder)) {
-					if (billStoreModeDef == BillStoreModeDefOf.SpecificStockpile) {
-						List<SlotGroup> listInPriorityOrder = bill.billStack.billGiver.Map.haulDestinationManager.AllGroupsListInPriorityOrder;
-						int count = listInPriorityOrder.Count;
-						for (int index = 0; index < count; ++index) {
-							SlotGroup group = listInPriorityOrder[index];
-							if (group.parent is Zone_Stockpile parent) {
-								if (!bill.recipe.WorkerCounter.CanPossiblyStore(bill, parent.slotGroup))
-									options.Add(new FloatMenuOption(string.Format("{0} ({1})", string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), "IncompatibleLower".Translate()), null));
-								else
-									options.Add(new FloatMenuOption(string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), () => bill.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, ((Zone_Stockpile)group.parent).GetSlotGroup())));
+			try
+			{
+				string label1 = string.Format(bill.GetStoreMode().LabelCap, bill.GetSlotGroup() != null ? bill.GetSlotGroup().StorageGroup.label : "");
+				if (bill.GetSlotGroup() != null && !bill.recipe.WorkerCounter.CanPossiblyStore(bill, bill.GetSlotGroup())) {
+					label1 += string.Format(" ({0})", "IncompatibleLower".Translate());
+					Text.Font = GameFont.Tiny;
+				}
+				if (listing2.ButtonText(label1)) {
+					Text.Font = GameFont.Small;
+					List<FloatMenuOption> options = new List<FloatMenuOption>();
+					foreach (BillStoreModeDef billStoreModeDef in DefDatabase<BillStoreModeDef>.AllDefs.OrderBy(bsm => bsm.listOrder)) {
+						if (billStoreModeDef == BillStoreModeDefOf.SpecificStockpile) {
+							List<SlotGroup> listInPriorityOrder = bill.billStack.billGiver.Map.haulDestinationManager.AllGroupsListInPriorityOrder;
+							int count = listInPriorityOrder.Count;
+							for (int index = 0; index < count; ++index) {
+								SlotGroup group = listInPriorityOrder[index];
+								if (group.parent is Zone_Stockpile parent) {
+									if (!bill.recipe.WorkerCounter.CanPossiblyStore(bill, parent.slotGroup))
+										options.Add(new FloatMenuOption(string.Format("{0} ({1})", string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), "IncompatibleLower".Translate()), null));
+									else
+										options.Add(new FloatMenuOption(string.Format(billStoreModeDef.LabelCap, group.parent.SlotYielderLabel()), () => bill.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, ((Zone_Stockpile)group.parent).GetSlotGroup())));
+								}
 							}
 						}
+						else {
+							BillStoreModeDef smLocal = billStoreModeDef;
+							options.Add(new FloatMenuOption(smLocal.LabelCap, () => bill.SetStoreMode(smLocal, null)));
+						}
 					}
-					else {
-						BillStoreModeDef smLocal = billStoreModeDef;
-						options.Add(new FloatMenuOption(smLocal.LabelCap, () => bill.SetStoreMode(smLocal, null)));
-					}
+					Find.WindowStack.Add(new FloatMenu(options));
 				}
-				Find.WindowStack.Add(new FloatMenu(options));
+				Text.Font = GameFont.Small;
 			}
-			Text.Font = GameFont.Small;
-			listing_standard.EndSection(listing2);
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering stockpile settings for bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				listing_standard.EndSection(listing2);
+			}
+
 			listing_standard.Gap();
 		}
 
 		private void RenderWorkerSettings(Listing_Standard listing_standard) {
 			// Worker restriction
 			Listing_Standard listing = listing_standard.BeginSection(WorkerSelectionSubdialogHeight);
-
-			// Here's what the original code for this looked like, so you can see how much shit I went through for this.
-			// string buttonLabel = this.bill.PawnRestriction == null ? (!ModsConfig.IdeologyActive || !this.bill.SlavesOnly ? (!ModsConfig.BiotechActive || !this.bill.recipe.mechanitorOnlyRecipe ? (!ModsConfig.BiotechActive || !this.bill.MechsOnly ? (string)"AnyWorker".Translate() : (string)"AnyMech".Translate()) : (string)"AnyMechanitor".Translate()) : (string)"AnySlave".Translate()) : this.bill.PawnRestriction.LabelShortCap;
-			string button_label;
-			// Someone was having issues with this method not being in their game. This will stop them getting errors. It can probably be removed eventually.
-			bool non_mech = false;
-			try {
-				non_mech = bill.NonMechsOnly;
-			}
-			catch { }
-
-			if (bill.PawnRestriction != null)
-				button_label = bill.PawnRestriction.LabelShortCap;
-			else if (ModsConfig.IdeologyActive && bill.SlavesOnly)
-				button_label = "AnySlave".Translate();
-			else if (ModsConfig.BiotechActive && bill.recipe.mechanitorOnlyRecipe)
-				button_label = "AnyMechanitor".Translate();
-			else if (ModsConfig.BiotechActive && bill.MechsOnly)
-				button_label = "AnyMech".Translate();
-			else if (ModsConfig.BiotechActive && non_mech)
-				button_label = "AnyNonMech".Translate();
-			else
-				button_label = "AnyWorker".Translate();
-
-			// Worker restriction dropdown.
-			var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Pawn>>>)(b => GeneratePawnRestrictionOptions());
-			Widgets.Dropdown(listing.GetRect(30f), bill, b => b.PawnRestriction, f, button_label);
-
-			// Worker skill restriction.
-			if (bill.PawnRestriction == null && bill.recipe.workSkill != null && !bill.MechsOnly) {
-				listing.Label("AllowedSkillRange".Translate(bill.recipe.workSkill.label));
-				int maxSkill = 20;
-				if (Math.endlessGrowthSupportEnabled)
-				{
-					maxSkill = EndlessGrowthSupport.GetMaxLevelForBill();
+			try
+			{
+				// Here's what the original code for this looked like, so you can see how much shit I went through for this.
+				// string buttonLabel = this.bill.PawnRestriction == null ? (!ModsConfig.IdeologyActive || !this.bill.SlavesOnly ? (!ModsConfig.BiotechActive || !this.bill.recipe.mechanitorOnlyRecipe ? (!ModsConfig.BiotechActive || !this.bill.MechsOnly ? (string)"AnyWorker".Translate() : (string)"AnyMech".Translate()) : (string)"AnyMechanitor".Translate()) : (string)"AnySlave".Translate()) : this.bill.PawnRestriction.LabelShortCap;
+				string button_label;
+				// Someone was having issues with this method not being in their game. This will stop them getting errors. It can probably be removed eventually.
+				bool non_mech = false;
+				try {
+					non_mech = bill.NonMechsOnly;
 				}
-				Widgets.IntRange(listing.GetRect(30), 0, ref bill.allowedSkillRange, 0, maxSkill);
+				catch { }
+
+				if (bill.PawnRestriction != null)
+					button_label = bill.PawnRestriction.LabelShortCap;
+				else if (ModsConfig.IdeologyActive && bill.SlavesOnly)
+					button_label = "AnySlave".Translate();
+				else if (ModsConfig.BiotechActive && bill.recipe.mechanitorOnlyRecipe)
+					button_label = "AnyMechanitor".Translate();
+				else if (ModsConfig.BiotechActive && bill.MechsOnly)
+					button_label = "AnyMech".Translate();
+				else if (ModsConfig.BiotechActive && non_mech)
+					button_label = "AnyNonMech".Translate();
+				else
+					button_label = "AnyWorker".Translate();
+
+				// Worker restriction dropdown.
+				var f = (Func<Bill_Production, IEnumerable<Widgets.DropdownMenuElement<Pawn>>>)(b => GeneratePawnRestrictionOptions());
+				Widgets.Dropdown(listing.GetRect(30f), bill, b => b.PawnRestriction, f, button_label);
+
+				// Worker skill restriction.
+				if (bill.PawnRestriction == null && bill.recipe.workSkill != null && !bill.MechsOnly) {
+					listing.Label("AllowedSkillRange".Translate(bill.recipe.workSkill.label));
+					int maxSkill = 20;
+					if (Math.endlessGrowthSupportEnabled)
+					{
+						maxSkill = EndlessGrowthSupport.GetMaxLevelForBill();
+					}
+					Widgets.IntRange(listing.GetRect(30), 546587532, ref bill.allowedSkillRange, 0, maxSkill);
+				}
 			}
-			listing_standard.EndSection(listing);
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering worker settings for bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				listing_standard.EndSection(listing);
+			}
 		}
 
 		private void RenderIngredients(Rect rect_right) {
@@ -367,14 +427,24 @@ namespace CrunchyDuck.Math {
 			// Ingredient search slider.
 			Listing_Standard listing_Standard5 = new Listing_Standard();
 			listing_Standard5.Begin(rect5);
-			string text3 = "IngredientSearchRadius".Translate().Truncate(rect5.width * 0.6f);
-			string text4 = ((bill.ingredientSearchRadius == 999f) ? "Unlimited".TranslateSimple().Truncate(rect5.width * 0.3f) : bill.ingredientSearchRadius.ToString("F0"));
-			listing_Standard5.Label(text3 + ": " + text4);
-			bill.ingredientSearchRadius = listing_Standard5.Slider((bill.ingredientSearchRadius > 100f) ? 100f : bill.ingredientSearchRadius, 3f, 100f);
-			if (bill.ingredientSearchRadius >= 100f) {
-				bill.ingredientSearchRadius = 999f;
+			try
+			{
+				string text3 = "IngredientSearchRadius".Translate().Truncate(rect5.width * 0.6f);
+				string text4 = ((bill.ingredientSearchRadius == 999f) ? "Unlimited".TranslateSimple().Truncate(rect5.width * 0.3f) : bill.ingredientSearchRadius.ToString("F0"));
+				listing_Standard5.Label(text3 + ": " + text4);
+				bill.ingredientSearchRadius = listing_Standard5.Slider((bill.ingredientSearchRadius > 100f) ? 100f : bill.ingredientSearchRadius, 3f, 100f);
+				if (bill.ingredientSearchRadius >= 100f) {
+					bill.ingredientSearchRadius = 999f;
+				}
 			}
-			listing_Standard5.End();
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering ingredient search radius settings for bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				listing_Standard5.End();
+			}
 		}
 
 		//Copied from What's Missing
@@ -384,33 +454,33 @@ namespace CrunchyDuck.Math {
 			// Suspended button.
 			Listing_Standard ls = new Listing_Standard();
 			ls.Begin(rect_left);
-			if (bill.suspended) {
-				if (ls.ButtonText("Suspended".Translate())) {
-					bill.suspended = false;
-					SoundDefOf.Click.PlayOneShotOnCamera();
-				}
-			}
-			else if (ls.ButtonText("NotSuspended".Translate())) {
-				bill.suspended = true;
-				SoundDefOf.Click.PlayOneShotOnCamera();
-			}
-
-			// Description + work amount.
-			StringBuilder stringBuilder = new StringBuilder();
-			if (bill.recipe.description != null) {
-				stringBuilder.AppendLine(bill.recipe.description);
-				stringBuilder.AppendLine();
-			}
-			stringBuilder.AppendLine("WorkAmount".Translate() + ": " + bill.recipe.WorkAmountTotal(null).ToStringWorkAmount());
-
-            //Also Copied wholesale from What's Missing. Ideally in the future I change this to my own code...
-            var currentMap = Find.CurrentMap;
-			var resourceCounter = currentMap.resourceCounter;
-			var colonists = currentMap.mapPawns.FreeColonists.ToList();
-
-			var recipe = bill.recipe;
 			try
 			{
+				if (bill.suspended) {
+					if (ls.ButtonText("Suspended".Translate())) {
+						bill.suspended = false;
+						SoundDefOf.Click.PlayOneShotOnCamera();
+					}
+				}
+				else if (ls.ButtonText("NotSuspended".Translate())) {
+					bill.suspended = true;
+					SoundDefOf.Click.PlayOneShotOnCamera();
+				}
+
+				// Description + work amount.
+				StringBuilder stringBuilder = new StringBuilder();
+				if (bill.recipe.description != null) {
+					stringBuilder.AppendLine(bill.recipe.description);
+					stringBuilder.AppendLine();
+				}
+				stringBuilder.AppendLine("WorkAmount".Translate() + ": " + bill.recipe.WorkAmountTotal(null).ToStringWorkAmount());
+
+				//Also Copied wholesale from What's Missing. Ideally in the future I change this to my own code...
+				var currentMap = Find.CurrentMap;
+				var resourceCounter = currentMap.resourceCounter;
+				var colonists = currentMap.mapPawns.FreeColonists.ToList();
+
+				var recipe = bill.recipe;
 				var description = recipe.description;
 				if (!string.IsNullOrWhiteSpace(description))
 				{
@@ -571,25 +641,32 @@ namespace CrunchyDuck.Math {
 						ls.Label(extraLine);
 					}
 				}
-			} finally {
+
+				string text5 = bill.recipe.IngredientValueGetter.ExtraDescriptionLine(bill.recipe);
+				if (text5 != null) {
+					stringBuilder.AppendLine(text5);
+					stringBuilder.AppendLine();
+				}
+				if (!bill.recipe.skillRequirements.NullOrEmpty()) {
+					stringBuilder.AppendLine("MinimumSkills".Translate());
+					stringBuilder.AppendLine(bill.recipe.MinSkillString);
+				}
+				Text.Font = GameFont.Small;
+				string text6 = stringBuilder.ToString();
+				if (Text.CalcHeight(text6, rect_left.width) > rect_left.height) {
+					Text.Font = GameFont.Tiny;
+				}
+				ls.Label(text6);
+				Text.Font = GameFont.Small;
 			}
-			string text5 = bill.recipe.IngredientValueGetter.ExtraDescriptionLine(bill.recipe);
-			if (text5 != null) {
-				stringBuilder.AppendLine(text5);
-				stringBuilder.AppendLine();
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering bill \"{bill.Label}\"");
 			}
-			if (!bill.recipe.skillRequirements.NullOrEmpty()) {
-				stringBuilder.AppendLine("MinimumSkills".Translate());
-				stringBuilder.AppendLine(bill.recipe.MinSkillString);
+			finally
+			{
+				ls.End();
 			}
-			Text.Font = GameFont.Small;
-			string text6 = stringBuilder.ToString();
-			if (Text.CalcHeight(text6, rect_left.width) > rect_left.height) {
-				Text.Font = GameFont.Tiny;
-			}
-			ls.Label(text6);
-			Text.Font = GameFont.Small;
-			ls.End();
 
 			// Link options
 			if (bc.linkTracker.Parent != null) {
@@ -655,14 +732,27 @@ namespace CrunchyDuck.Math {
 
 			// Code heavily inspired by ThingFilterUI.DoThingFilterConfigWindow
 			Widgets.BeginScrollView(render_area, ref linkSettingsScrollPos, scroll_area);
-			Listing_Tree lt = new Listing_Tree();
-			lt.Begin(scroll_area);
-			foreach (TreeNode_Link node in linkSettingsMaster.children) {
-				node.Render(lt, 0);
+			try {
+				Listing_Tree lt = new Listing_Tree();
+				lt.Begin(scroll_area);
+				try {
+					foreach (TreeNode_Link node in linkSettingsMaster.children) {
+						if (node == null) Math.TryLogErrorMessage("link settings node is null", $"Encountered an error while rendering link settings for bill \"{bill.Label}\"");
+						else node.Render(lt, 0);
+					}
+					linkSettingsHeight = lt.CurHeight + 10;
+				} finally {
+					lt.End();
+				}
 			}
-			linkSettingsHeight = lt.CurHeight + 10;
-			lt.End();
-			Widgets.EndScrollView();
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering link settings for bill \"{bill.Label}\"");
+			}
+			finally
+			{
+				Widgets.EndScrollView();
+			}
 		}
 
 		private static void MathBillEntry(InputField field, Listing_Standard ls, int multiplier = 1) {
@@ -908,8 +998,10 @@ namespace CrunchyDuck.Math {
 				lt.OpenCloseWidget(this, indentation_level, 1);
 				lt.EndLine();
 				if (IsOpen(1)) {
-					foreach (TreeNode_Link node in children)
-						node.Render(lt, indentation_level + 1);
+					foreach (TreeNode_Link node in children) {
+						if (node == null) Math.TryLogErrorMessage("child is null", "Encountered an error while rendering link children");
+						else node.Render(lt, indentation_level + 1);
+					}
 				}
 				return;
 			}
