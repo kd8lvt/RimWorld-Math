@@ -159,6 +159,10 @@ namespace CrunchyDuck.Math {
 				RenderStockpileSettings(listing_standard);
 				RenderWorkerSettings(listing_standard);
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering bill \"{bill.Label}\"");
+			}
 			finally
 			{
 				listing_standard.End();
@@ -212,6 +216,10 @@ namespace CrunchyDuck.Math {
 							MathTextField(bc.itemsToCount, rect);
 						}
 					}
+					catch (Exception e)
+					{
+						Math.TryLogException(e, $"Encountered an error while rendering target count settings for bill \"{bill.Label}\"");
+					}
 					finally
 					{
 						item_count_listing.End();
@@ -235,6 +243,10 @@ namespace CrunchyDuck.Math {
 							equipped_tainted_listing.NewColumn();
 							if (producedThingDef.IsApparel && producedThingDef.apparel.careIfWornByCorpse)
 								equipped_tainted_listing.CheckboxLabeled("IncludeTainted".Translate(), ref bill.includeTainted);
+						}
+						catch (Exception e)
+						{
+							Math.TryLogException(e, $"Encountered an error while rendering include settings for bill \"{bill.Label}\"");
 						}
 						finally
 						{
@@ -276,10 +288,15 @@ namespace CrunchyDuck.Math {
 					}
 				}
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering settings for bill \"{bill.Label}\"");
+			}
 			finally
 			{
 				listing_standard.EndSection(listing);
 			}
+
 			listing_standard.Gap();
 		}
 
@@ -319,10 +336,15 @@ namespace CrunchyDuck.Math {
 				}
 				Text.Font = GameFont.Small;
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering stockpile settings for bill \"{bill.Label}\"");
+			}
 			finally
 			{
 				listing_standard.EndSection(listing2);
 			}
+
 			listing_standard.Gap();
 		}
 
@@ -369,6 +391,10 @@ namespace CrunchyDuck.Math {
 					Widgets.IntRange(listing.GetRect(30), 0, ref bill.allowedSkillRange, 0, maxSkill);
 				}
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering worker settings for bill \"{bill.Label}\"");
+			}
 			finally
 			{
 				listing_standard.EndSection(listing);
@@ -411,6 +437,10 @@ namespace CrunchyDuck.Math {
 					bill.ingredientSearchRadius = 999f;
 				}
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering ingredient search radius settings for bill \"{bill.Label}\"");
+			}
 			finally
 			{
 				listing_Standard5.End();
@@ -451,170 +481,167 @@ namespace CrunchyDuck.Math {
 				var colonists = currentMap.mapPawns.FreeColonists.ToList();
 
 				var recipe = bill.recipe;
-				try
+				var description = recipe.description;
+				if (!string.IsNullOrWhiteSpace(description))
 				{
-					var description = recipe.description;
-					if (!string.IsNullOrWhiteSpace(description))
+					ls.Label($"{description}\n");
+				}
+
+				ls.Label("Requires (see tooltips, ingredients can be clicked):");
+				ls.Label($"{recipe.WorkAmountTotal(null):0} work");
+
+				var ingrValueGetter = recipe.IngredientValueGetter;
+				var ingredients = recipe.ingredients;
+				var isNutrition = ingrValueGetter is IngredientValueGetter_Nutrition;
+				var isVolume = ingrValueGetter is IngredientValueGetter_Volume;
+				var defaultValueFormatter = isNutrition || isVolume;
+				for (int ingrIndex = 0, ingrCount = ingredients.Count; ingrIndex < ingrCount; ++ingrIndex)
+				{
+					var ingrAndCount = ingredients[ingrIndex];
+
+					var summary = ingrAndCount.filter.Summary;
+					if (string.IsNullOrEmpty(summary))
 					{
-						ls.Label($"{description}\n");
+						continue;
 					}
 
-					ls.Label("Requires (see tooltips, ingredients can be clicked):");
-					ls.Label($"{recipe.WorkAmountTotal(null):0} work");
-
-					var ingrValueGetter = recipe.IngredientValueGetter;
-					var ingredients = recipe.ingredients;
-					var isNutrition = ingrValueGetter is IngredientValueGetter_Nutrition;
-					var isVolume = ingrValueGetter is IngredientValueGetter_Volume;
-					var defaultValueFormatter = isNutrition || isVolume;
-					for (int ingrIndex = 0, ingrCount = ingredients.Count; ingrIndex < ingrCount; ++ingrIndex)
+					var descr = ingrValueGetter.BillRequirementsDescription(recipe, ingrAndCount);
+					if (!defaultValueFormatter)
 					{
-						var ingrAndCount = ingredients[ingrIndex];
+						ls.Label(descr);
+						continue;
+					}
 
-						var summary = ingrAndCount.filter.Summary;
-						if (string.IsNullOrEmpty(summary))
-						{
-							continue;
-						}
-
-						var descr = ingrValueGetter.BillRequirementsDescription(recipe, ingrAndCount);
-						if (!defaultValueFormatter)
-						{
-							ls.Label(descr);
-							continue;
-						}
-
-						var neededCountDict = new Dictionary<int, List<(ThingDef td, int count)>>();
-						foreach (var td in ingrAndCount.filter.AllowedThingDefs)
-						{
-							var tdNeeded = ingrAndCount.CountRequiredOfFor(td, recipe);
-							if (tdNeeded <= 0)
-							{
-								// impossible
-								continue;
-							}
-							if (!neededCountDict.TryGetValue(tdNeeded, out var neededList))
-							{
-								neededList = new List<(ThingDef, int)>();
-								neededCountDict.Add(tdNeeded, neededList);
-							}
-							neededList.Add((td, resourceCounter.GetCount(td)));
-						}
-
-						if (neededCountDict.Count == 0)
-						{
-							// impossible
-							ls.Label(descr);
-							continue;
-						}
-
-						var tooltip = new StringBuilder();
-						tooltip.AppendLine(descr);
-						tooltip.AppendLine("\nYou have \u2044 needed:");
-						if (recipe.allowMixingIngredients)
-						{
-							tooltip.AppendLine("(mixing ingredients is possible)");
-						}
-
-						ThingDef lastTd = null;
-						var tdCount = 0;
-						var labelList = new List<string>();
-						foreach (var (needed, list) in neededCountDict.Select(kv => (needed: kv.Key, list: kv.Value)).OrderBy(i => i.needed))
-						{
-							tooltip.AppendLine();
-							foreach (var gotGroup in list.GroupBy(i => i.count).OrderBy(i => -i.Key))
-							{
-								var names = gotGroup.Select(i => i.td.label).ToList();
-								names.Sort(StringComparer.InvariantCultureIgnoreCase);
-								tooltip.AppendLine($"{MakeColor(needed, gotGroup.Key)}{gotGroup.Key} \u2044 {needed}</color> {string.Join("; ", names)}");
-							}
-
-							var got = recipe.allowMixingIngredients ? list.Select(i => i.count).Sum() : list.Select(i => i.count).Max();
-							var color = MakeColor(needed, got);
-							labelList.Add($"{MakeColor(needed, got)}{needed}</color>");
-
-							tdCount += list.Count;
-							lastTd = list[list.Count - 1].td;
-						}
-						if (tdCount == 0)
+					var neededCountDict = new Dictionary<int, List<(ThingDef td, int count)>>();
+					foreach (var td in ingrAndCount.filter.AllowedThingDefs)
+					{
+						var tdNeeded = ingrAndCount.CountRequiredOfFor(td, recipe);
+						if (tdNeeded <= 0)
 						{
 							// impossible
 							continue;
 						}
+						if (!neededCountDict.TryGetValue(tdNeeded, out var neededList))
+						{
+							neededList = new List<(ThingDef, int)>();
+							neededCountDict.Add(tdNeeded, neededList);
+						}
+						neededList.Add((td, resourceCounter.GetCount(td)));
+					}
 
-						var labelRect = ls.Label(
-							$"{string.Join(" | ", labelList)} {(isNutrition ? $"nutrition ({summary})" : summary)}",
-							tooltip: tooltip.ToString()
-						);
+					if (neededCountDict.Count == 0)
+					{
+						// impossible
+						ls.Label(descr);
+						continue;
+					}
+
+					var tooltip = new StringBuilder();
+					tooltip.AppendLine(descr);
+					tooltip.AppendLine("\nYou have \u2044 needed:");
+					if (recipe.allowMixingIngredients)
+					{
+						tooltip.AppendLine("(mixing ingredients is possible)");
+					}
+
+					ThingDef lastTd = null;
+					var tdCount = 0;
+					var labelList = new List<string>();
+					foreach (var (needed, list) in neededCountDict.Select(kv => (needed: kv.Key, list: kv.Value)).OrderBy(i => i.needed))
+					{
+						tooltip.AppendLine();
+						foreach (var gotGroup in list.GroupBy(i => i.count).OrderBy(i => -i.Key))
+						{
+							var names = gotGroup.Select(i => i.td.label).ToList();
+							names.Sort(StringComparer.InvariantCultureIgnoreCase);
+							tooltip.AppendLine($"{MakeColor(needed, gotGroup.Key)}{gotGroup.Key} \u2044 {needed}</color> {string.Join("; ", names)}");
+						}
+
+						var got = recipe.allowMixingIngredients ? list.Select(i => i.count).Sum() : list.Select(i => i.count).Max();
+						var color = MakeColor(needed, got);
+						labelList.Add($"{MakeColor(needed, got)}{needed}</color>");
+
+						tdCount += list.Count;
+						lastTd = list[list.Count - 1].td;
+					}
+					if (tdCount == 0)
+					{
+						// impossible
+						continue;
+					}
+
+					var labelRect = ls.Label(
+						$"{string.Join(" | ", labelList)} {(isNutrition ? $"nutrition ({summary})" : summary)}",
+						tooltip: tooltip.ToString()
+					);
+					if (Widgets.ButtonInvisible(labelRect))
+					{
+						Find.WindowStack.Add(new Dialog_InfoCard(lastTd));
+					}
+				}
+
+				var colonistSkillsDict = new Dictionary<string, List<(int s, List<Pawn> p)>>();
+				if (recipe.skillRequirements is List<SkillRequirement> skillReqs)
+				{
+					// listing.Label($"{"MinimumSkills".Translate()} {recipe.MinSkillString}");
+					for (int i = 0, l = skillReqs.Count; i < l; ++i)
+					{
+						var skillReq = skillReqs[i];
+						var skill = skillReq.skill;
+						var minLevel = skillReq.minLevel;
+						if (!colonistSkillsDict.TryGetValue(skill.defName, out var colonistSkills))
+						{
+							colonistSkills = (
+								colonists.
+								Select(col => (c: col, s: col.skills.GetSkill(skill))).
+								Where(cs => !cs.s.TotallyDisabled).
+								Select(cs => (cs.c, s: cs.s.levelInt)).
+								GroupBy(cs => cs.s).
+								Select(g => (
+									s: g.Key,
+									p: g.AsEnumerable().Select(cs => cs.c).OrderBy(p => p.Name.ToStringShort).ToList()
+								)).
+								OrderBy(ps => -ps.s).
+								ToList()
+							);
+							colonistSkillsDict.Add(skill.defName, colonistSkills);
+						}
+
+						Rect labelRect;
+						if (colonistSkills.NullOrEmpty())
+						{
+							// no colonists in map??
+							labelRect = ls.Label($"{skill.LabelCap} {minLevel}");
+						}
+						else
+						{
+							var tooltip = new StringBuilder();
+							tooltip.AppendLine(skillReq.Summary);
+							foreach ((var skillLevel, var pawns) in colonistSkills)
+							{
+								tooltip.AppendLine(
+									$"{MakeColor(minLevel, skillLevel)}{skillLevel} \u2044 {minLevel}</color> " +
+									string.Join("; ", pawns.Select(p => p.Name.ToStringShort))
+								);
+							}
+							labelRect = ls.Label($"{skill.LabelCap} {MakeColor(minLevel, colonistSkills[0].s)}{minLevel}</color>", tooltip: tooltip.ToString());
+						}
 						if (Widgets.ButtonInvisible(labelRect))
 						{
-							Find.WindowStack.Add(new Dialog_InfoCard(lastTd));
+							Find.WindowStack.Add(new Dialog_InfoCard(skill));
 						}
 					}
-
-					var colonistSkillsDict = new Dictionary<string, List<(int s, List<Pawn> p)>>();
-					if (recipe.skillRequirements is List<SkillRequirement> skillReqs)
-					{
-						// listing.Label($"{"MinimumSkills".Translate()} {recipe.MinSkillString}");
-						for (int i = 0, l = skillReqs.Count; i < l; ++i)
-						{
-							var skillReq = skillReqs[i];
-							var skill = skillReq.skill;
-							var minLevel = skillReq.minLevel;
-							if (!colonistSkillsDict.TryGetValue(skill.defName, out var colonistSkills))
-							{
-								colonistSkills = (
-									colonists.
-									Select(col => (c: col, s: col.skills.GetSkill(skill))).
-									Where(cs => !cs.s.TotallyDisabled).
-									Select(cs => (cs.c, s: cs.s.levelInt)).
-									GroupBy(cs => cs.s).
-									Select(g => (
-										s: g.Key,
-										p: g.AsEnumerable().Select(cs => cs.c).OrderBy(p => p.Name.ToStringShort).ToList()
-									)).
-									OrderBy(ps => -ps.s).
-									ToList()
-								);
-								colonistSkillsDict.Add(skill.defName, colonistSkills);
-							}
-
-							Rect labelRect;
-							if (colonistSkills.NullOrEmpty())
-							{
-								// no colonists in map??
-								labelRect = ls.Label($"{skill.LabelCap} {minLevel}");
-							}
-							else
-							{
-								var tooltip = new StringBuilder();
-								tooltip.AppendLine(skillReq.Summary);
-								foreach ((var skillLevel, var pawns) in colonistSkills)
-								{
-									tooltip.AppendLine(
-										$"{MakeColor(minLevel, skillLevel)}{skillLevel} \u2044 {minLevel}</color> " +
-										string.Join("; ", pawns.Select(p => p.Name.ToStringShort))
-									);
-								}
-								labelRect = ls.Label($"{skill.LabelCap} {MakeColor(minLevel, colonistSkills[0].s)}{minLevel}</color>", tooltip: tooltip.ToString());
-							}
-							if (Widgets.ButtonInvisible(labelRect))
-							{
-								Find.WindowStack.Add(new Dialog_InfoCard(skill));
-							}
-						}
-					}
-
-					if (!isVolume)
-					{
-						var extraLine = ingrValueGetter.ExtraDescriptionLine(recipe);
-						if (!string.IsNullOrWhiteSpace(extraLine))
-						{
-							ls.Label(extraLine);
-						}
-					}
-				} finally {
 				}
+
+				if (!isVolume)
+				{
+					var extraLine = ingrValueGetter.ExtraDescriptionLine(recipe);
+					if (!string.IsNullOrWhiteSpace(extraLine))
+					{
+						ls.Label(extraLine);
+					}
+				}
+
 				string text5 = bill.recipe.IngredientValueGetter.ExtraDescriptionLine(bill.recipe);
 				if (text5 != null) {
 					stringBuilder.AppendLine(text5);
@@ -631,6 +658,10 @@ namespace CrunchyDuck.Math {
 				}
 				ls.Label(text6);
 				Text.Font = GameFont.Small;
+			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering bill \"{bill.Label}\"");
 			}
 			finally
 			{
@@ -701,21 +732,22 @@ namespace CrunchyDuck.Math {
 
 			// Code heavily inspired by ThingFilterUI.DoThingFilterConfigWindow
 			Widgets.BeginScrollView(render_area, ref linkSettingsScrollPos, scroll_area);
-			try
-			{
+			try {
 				Listing_Tree lt = new Listing_Tree();
 				lt.Begin(scroll_area);
-				try
-				{
+				try {
 					foreach (TreeNode_Link node in linkSettingsMaster.children) {
-						node?.Render(lt, 0);
+						if (node == null) Math.TryLogErrorMessage("link settings node is null", $"Encountered an error while rendering link settings for bill \"{bill.Label}\"");
+						else node.Render(lt, 0);
 					}
 					linkSettingsHeight = lt.CurHeight + 10;
-				}
-				finally
-				{
+				} finally {
 					lt.End();
 				}
+			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, $"Encountered an error while rendering link settings for bill \"{bill.Label}\"");
 			}
 			finally
 			{
@@ -966,8 +998,10 @@ namespace CrunchyDuck.Math {
 				lt.OpenCloseWidget(this, indentation_level, 1);
 				lt.EndLine();
 				if (IsOpen(1)) {
-					foreach (TreeNode_Link node in children)
-						node.Render(lt, indentation_level + 1);
+					foreach (TreeNode_Link node in children) {
+						if (node == null) Math.TryLogErrorMessage("child is null", "Encountered an error while rendering link children");
+						else node.Render(lt, indentation_level + 1);
+					}
 				}
 				return;
 			}

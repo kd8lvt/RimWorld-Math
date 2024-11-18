@@ -45,6 +45,8 @@ namespace CrunchyDuck.Math {
 		public static bool compositableLoadoutsSupportEnabled = false;
 		public static bool endlessGrowthSupportEnabled = false;
 
+		private static readonly HashSet<ExceptionIdentifier> _loggedExceptions = new HashSet<ExceptionIdentifier>();
+
 		static Math() {
 			Check3rdPartyMods();
 			PerformPatches();
@@ -295,6 +297,34 @@ namespace CrunchyDuck.Math {
         {
 			if (MathSettings.settings.extlogging) Log.Message("[Math!] " + message);
         }
+
+		/// <summary>
+		/// Logs the <see cref="Exception"/> if it has not been logged before.
+		/// </summary>
+		/// <param name="exception">The <see cref="Exception"/> to log.</param>
+		/// <param name="context">The message to prepend to the <see cref="Exception"/> to give context.</param>
+		public static void TryLogException(Exception exception, in string context = "Encountered an error")
+		{
+			if (_loggedExceptions.Add(new ExceptionIdentifier(exception, context)))
+			{
+				// New exception
+				Log.Error($"[Math!] {context} - logging it once and trying to recover smoothly. Original message: {exception.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Logs the error message if it has not been logged before.
+		/// </summary>
+		/// <param name="message">The error message to log.</param>
+		/// <param name="context">The message to prepend to the error message to give context.</param>
+		public static void TryLogErrorMessage(in string message, in string context = "Encountered an error")
+		{
+			if (_loggedExceptions.Add(new ExceptionIdentifier(message, context)))
+			{
+				// New message
+				Log.Error($"[Math!] {context} - logging it once and trying to recover smoothly. Original message: {message}");
+			}
+		}
 	}
 
 	public class InfiniteRecursionException : Exception {}

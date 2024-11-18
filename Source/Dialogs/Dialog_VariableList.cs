@@ -134,16 +134,25 @@ namespace CrunchyDuck.Math {
 						uv.equation = Widgets.TextField(variable_equation_rect, uv.equation);
 						GUI.color = original_col;
 					}
+					catch (Exception e)
+					{
+						Math.TryLogException(e, $"Encountered an error while rendering user variable \"{uv?.name ?? "NULL"}\"");
+					}
 					finally
 					{
 						Widgets.EndGroup();
 					}
 				}
 			}
+			catch (Exception e)
+			{
+				Math.TryLogException(e, "Encountered an error while rendering user variable list");
+			}
 			finally
 			{
 				Widgets.EndScrollView();
 			}
+
 			MathSettings.settings.userVariablesDict = uvs_dict;
 		}
 	}
